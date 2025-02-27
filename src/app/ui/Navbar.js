@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const Navbar = () => {
   return (
@@ -22,7 +22,7 @@ const Navbar = () => {
           Appointments
         </Link>
         <Link
-          href="/"
+          href="/contact"
           className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
         >
           Contact Us
