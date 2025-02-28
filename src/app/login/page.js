@@ -1,8 +1,17 @@
+"use client";
 import { Mail, Lock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+
 export default function LoginPage() {
+  const handleGoogleLogin = () => {
+    // Trigger Google login
+    console.log("Google login triggered");
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    window.location.href = `${backendUrl}/auth/google`;
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Left Section - Image */}
@@ -96,7 +105,11 @@ export default function LoginPage() {
 
             {/* Social Login */}
             <div className="space-y-2">
-              <button className="w-full flex items-center justify-center gap-3 py-2 px-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg border border-gray-700 transition-colors">
+              <button
+                type="button"
+                onClick={handleGoogleLogin} // Triggers Google login
+                className="w-full flex items-center justify-center gap-3 py-2 px-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg border border-gray-700 transition-colors"
+              >
                 <Image
                   src="/img/Google_Logo_Primary.png"
                   alt="Google"
