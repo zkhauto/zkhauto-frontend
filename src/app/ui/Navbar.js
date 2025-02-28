@@ -10,13 +10,19 @@ const Navbar = () => {
       </h1>
       <div className="hidden md:flex space-x-6">
         <Link
+          href="/"
+          className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
+        >
+          Home
+        </Link>
+        <Link
           href="/carlisting"
           className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
         >
           Car Listings
         </Link>
         <Link
-          href="/"
+          href="/appointments"
           className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
         >
           Appointments
