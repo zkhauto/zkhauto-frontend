@@ -37,9 +37,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
 import Navbar from "../ui/Navbar";
 
-export default function ContactUs() {
+const ContactUs = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -48,8 +49,8 @@ export default function ContactUs() {
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSubmitted(true);
-      const form = e.target;
-      form.reset();
+      e.target.reset();
+      setSelectedTopic("");
     }, 1500);
   };
 
@@ -207,7 +208,11 @@ export default function ContactUs() {
                     </Button>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form
+                    onSubmit={handleSubmit}
+                    key="contact-form"
+                    className="space-y-6"
+                  >
                     <div className="grid gap-6 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label
@@ -268,7 +273,10 @@ export default function ContactUs() {
                       <Label htmlFor="topic" className="text-sm font-medium">
                         Subject/Topic <span className="text-red-500">*</span>
                       </Label>
-                      <Select required>
+                      <Select
+                        value={selectedTopic}
+                        onValueChange={setSelectedTopic}
+                      >
                         <SelectTrigger
                           id="topic"
                           className="border-gray-200 focus-visible:ring-gray-500"
@@ -471,8 +479,6 @@ export default function ContactUs() {
       </div>
     </div>
   );
-}
+};
 
-
-export default page;
-
+export default ContactUs;
