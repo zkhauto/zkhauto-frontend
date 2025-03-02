@@ -3,12 +3,12 @@ import { Mail, Lock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-
 export default function LoginPage() {
   const handleGoogleLogin = () => {
     // Trigger Google login
     console.log("Google login triggered");
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const backendUrl =
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
     window.location.href = `${backendUrl}/auth/google`;
   };
 
