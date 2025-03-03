@@ -4,31 +4,21 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import user_img from "../../../public/img/user_img.png";
+import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
-  const [user, setUser] = useState(null);
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/auth/current-user",
-          {
-            credentials: "include", // Important for cookies
-          }
-        );
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-          console.log(userData);
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-      }
-    };
+  const handleProfileClick = () => {
+    router.push("/profile");
+  };
 
-    checkAuth();
-  }, []);
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <nav className="flex justify-between items-center p-4 bg-gray-900 text-white">
@@ -85,27 +75,23 @@ const Navbar = () => {
             </Button>
           </>
         ) : (
-          <div className="flex items-center gap-4">
-            <Link
-              href="/profile"
-              className="flex items-center gap-3 px-4 py-2 rounded-full bg-gray-800 hover:bg-gray-700 transition-all duration-200 border border-gray-700"
-            >
-              <Image
-                src={user.profilePhoto || "https://via.placeholder.com/32"}
-                alt="Profile"
-                width={32}
-                height={32}
-                className="rounded-full ring-2 ring-gray-700"
-                priority
-                unoptimized={user.profilePhoto?.includes(
-                  "googleusercontent.com"
-                )}
-              />
-              <span className="text-sm font-medium text-white">
-                {user.displayName || `${user.firstName} ${user.lastName}`}
-              </span>
-            </Link>
-          </div>
+          <button
+            onClick={handleProfileClick}
+            className="flex items-center gap-3 px-4 py-2 rounded-full bg-gray-800 hover:bg-gray-700 transition-all duration-200 border border-gray-700"
+          >
+            <Image
+              src={user.profilePhoto || user_img}
+              alt="Profile"
+              width={32}
+              height={32}
+              className="rounded-full ring-2 ring-gray-700"
+              priority
+              unoptimized={user.profilePhoto?.includes("googleusercontent.com")}
+            />
+            <span className="text-sm font-medium text-white">
+              {user.displayName || `${user.firstName} ${user.lastName}`}
+            </span>
+          </button>
         )}
       </div>
     </nav>

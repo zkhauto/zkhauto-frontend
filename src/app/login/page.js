@@ -2,14 +2,56 @@
 import { Mail, Lock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const { setUser } = useAuth();
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleGoogleLogin = () => {
     // Trigger Google login
     console.log("Google login triggered");
     const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-    window.location.href = `${backendUrl}/auth/google`;
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/";
+    window.location.href = `${backendUrl}auth/google`;
+  };
+
+  //login the get user if the user already exists if not redirect it to signup page
+  const handleLogin = async (e) => {
+    e.preventDefault(); // Add this to prevent form submission
+    setIsLoading(true);
+    try {
+      const response = await fetch("http://localhost:5000/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser(data.user); // Set user in context
+        router.push("/");
+      } else {
+        // Handle login error
+        setError(data.message || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setError("An error occurred during login");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -41,8 +83,15 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Add error message display */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-2 rounded">
+              {error}
+            </div>
+          )}
+
           {/* Form */}
-          <form className="mt-6 space-y-4">
+          <form className="mt-6 space-y-4" onSubmit={handleLogin}>
             <div className="space-y-3">
               <div className="relative">
                 <Mail
@@ -53,6 +102,8 @@ export default function LoginPage() {
                   type="email"
                   placeholder="Email Address"
                   className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="relative">
@@ -64,6 +115,8 @@ export default function LoginPage() {
                   type="password"
                   placeholder="Password"
                   className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </div>
@@ -74,6 +127,8 @@ export default function LoginPage() {
                 <input
                   type="checkbox"
                   className="w-4 h-4 bg-gray-800 border-gray-700 rounded text-blue-500 focus:ring-blue-500"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                 />
                 <span className="ml-2 text-sm text-gray-400">Remember me</span>
               </label>
@@ -89,8 +144,9 @@ export default function LoginPage() {
             <button
               type="submit"
               className="w-full mt-4 py-2.5 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+              disabled={isLoading}
             >
-              Login
+              {isLoading ? "Logging in..." : "Login"}
             </button>
 
             {/* Divider */}
