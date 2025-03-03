@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Navbar from "../ui/Navbar";
+import user_img from "../../../public/img/user_img.png";
 
 export default function UserProfileEdit() {
   const [user, setUser] = useState(null);
@@ -42,6 +43,28 @@ export default function UserProfileEdit() {
     fetchUser();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/auth/logout", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        setUser(null);
+        window.location.replace("/");
+      } else {
+        console.error("Logout failed:", await response.text());
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
   if (!user) {
     return <div>Loading...</div>;
   }
@@ -61,10 +84,12 @@ export default function UserProfileEdit() {
         {/* Profile Header */}
         <div className="mb-8 flex items-center">
           <div className="relative">
-            <Avatar className="h-24 w-24 border-4 border-slate-800">
+            <Avatar className="h-24 w-24 border-4 border-slate-800 overflow-hidden">
               <AvatarImage
-                src={user.profilePhoto || "/placeholder.svg"}
+                src={user.profilePhoto || "/img/user_img.png"}
                 alt="Profile"
+                className="aspect-square w-full h-full object-cover"
+                style={{ objectFit: "cover" }}
               />
               <AvatarFallback className="bg-slate-800 text-xl">
                 {user.firstName?.[0]}
@@ -73,12 +98,12 @@ export default function UserProfileEdit() {
             </Avatar>
             <Button
               size="icon"
-              className="absolute bottom-0 right-0 rounded-full bg-blue-600 hover:bg-blue-500"
+              className="absolute bottom-0 right-0 rounded-full bg-blue-600 hover:bg-blue-500 w-8 h-8 flex items-center justify-center"
             >
               <Edit2 className="h-4 w-4" />
             </Button>
           </div>
-          <div className="ml-6">
+          <div className="ml-6 flex flex-col justify-center">
             <div className="flex items-center gap-4">
               <h2 className="text-2xl font-bold text-white">
                 {user.displayName || `${user.firstName} ${user.lastName}`}
@@ -283,6 +308,7 @@ export default function UserProfileEdit() {
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={handleLogout}
                   className="flex-1 border-blue-600/50 text-blue-500 hover:bg-blue-600/10 hover:border-blue-500 transition-colors hover:text-white"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
