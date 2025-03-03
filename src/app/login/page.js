@@ -19,8 +19,8 @@ export default function LoginPage() {
     // Trigger Google login
     console.log("Google login triggered");
     const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/";
-    window.location.href = `${backendUrl}auth/google`;
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    window.location.href = `${backendUrl}/auth/google`;
   };
 
   //login the get user if the user already exists if not redirect it to signup page

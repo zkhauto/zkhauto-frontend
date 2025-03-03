@@ -19,7 +19,7 @@ const SignUpPage = () => {
 
   const handleGoogleSignup = () => {
     const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/";
     window.location.href = `${backendUrl}/auth/google`;
   };
 
