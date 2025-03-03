@@ -1,9 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import user_img from "../../../public/img/user_img.png";
 import { useAuth } from "../context/AuthContext";
@@ -44,6 +44,12 @@ const Navbar = () => {
           className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
         >
           Appointments
+        </Link>
+        <Link
+          href="/booking"
+          className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
+        >
+          Booking and Visiting
         </Link>
         <Link
           href="/contact"
