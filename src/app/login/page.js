@@ -3,8 +3,12 @@ import { Mail, Lock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const { setUser } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -36,8 +40,8 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Successful login
-        window.location.href = "/"; // Redirect to home page
+        setUser(data.user); // Set user in context
+        router.push("/");
       } else {
         // Handle login error
         setError(data.message || "Login failed");

@@ -6,35 +6,19 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import user_img from "../../../public/img/user_img.png";
+import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
+  const { user, loading } = useAuth();
   const router = useRouter();
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/auth/current-user",
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-      }
-    };
-
-    checkAuth();
-  }, []);
 
   const handleProfileClick = () => {
     router.push("/profile");
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <nav className="flex justify-between items-center p-4 bg-gray-900 text-white">
