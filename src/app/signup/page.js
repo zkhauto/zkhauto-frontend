@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Mail, Lock, User } from "lucide-react";
+import { Lock, Mail, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const SignUpPage = () => {
   const router = useRouter();
@@ -19,7 +19,7 @@ const SignUpPage = () => {
 
   const handleGoogleSignup = () => {
     const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/";
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
     window.location.href = `${backendUrl}/auth/google`;
   };
 
