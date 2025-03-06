@@ -1,40 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Car,
-  Star,
-  Package,
-  Save,
-  Trash2,
-  Key,
-  LogOut,
-  Edit2,
-  MapPin,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import Navbar from "../ui/Navbar";
-import user_img from "../../../public/img/user_img.png";
-import { useAuth } from "../context/AuthContext";
+import {
+  Car,
+  Edit2,
+  Key,
+  LogOut,
+  MapPin,
+  Package,
+  Save,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
+import { useAuth } from "../context/AuthContext";
+import Navbar from "../ui/Navbar";
 
 export default function UserProfileEdit() {
   const { user, loading, setUser } = useAuth();
   const router = useRouter();
 
+  // if (!user) {
+  //   router.push("/login");
+  //   return null;
+  // }
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [loading, user, router]);
   if (loading) {
     return <div>Loading...</div>;
   }
 
   if (!user) {
-    router.push("/login");
     return null;
   }
-
   const handleLogout = async () => {
     try {
       const response = await fetch("http://localhost:5000/auth/logout", {
