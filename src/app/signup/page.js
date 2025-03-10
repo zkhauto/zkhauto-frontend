@@ -20,7 +20,7 @@ const SignUpPage = () => {
   const handleGoogleSignup = () => {
     const backendUrl =
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-    window.location.href = `${backendUrl}/auth/google`;
+    window.location.href = `${backendUrl}/users/google`;
   };
 
   const handleSignup = async (e) => {
@@ -41,7 +41,7 @@ const SignUpPage = () => {
       };
       console.log("Sending signup data:", signupData);
 
-      const response = await fetch("http://localhost:5000/auth/signup", {
+      const response = await fetch("http://localhost:5000/users/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
