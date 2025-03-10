@@ -174,15 +174,6 @@ export default function LoginPage() {
                 />
                 Continue with Google
               </button>
-              <button className="w-full flex items-center justify-center gap-3 py-2 px-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg border border-gray-700 transition-colors">
-                <Image
-                  src="/img/Facebook_Logo_Primary.png"
-                  alt="Facebook"
-                  width={20}
-                  height={20}
-                />
-                Continue with Facebook
-              </button>
             </div>
 
             {/* Sign Up Link */}
@@ -193,6 +184,16 @@ export default function LoginPage() {
                 className="text-blue-500 hover:text-blue-400"
               >
                 Sign up
+              </Link>
+            </p>
+
+            {/* Add Back to Home Link */}
+            <p className="text-center text-gray-400 mt-4">
+              <Link
+                href="/"
+                className="flex items-center justify-center gap-2 text-blue-500 hover:text-blue-400 border border-gray-700 rounded-lg p-2 hover:bg-gray-800 transition-colors"
+              >
+                <span>←</span> Back to Home
               </Link>
             </p>
           </form>

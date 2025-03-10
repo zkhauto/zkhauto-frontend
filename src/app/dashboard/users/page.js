@@ -5,7 +5,6 @@ import {
   Plus,
   Search,
   Edit,
-  Trash2,
   ChevronLeft,
   ChevronRight,
   Mail,
@@ -28,7 +27,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -48,7 +46,6 @@ const UsersPage = () => {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,121 +86,45 @@ const UsersPage = () => {
       user.displayName?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const openAddModal = () => {
-    setCurrentUser({
-      firstName: "",
-      lastName: "",
-      email: "",
-      displayName: "",
-      role: "user",
-      password: "",
-      profilePhoto: "/img/user_img.png",
-    });
-    setIsEditing(false);
-    setIsAddEditModalOpen(true);
-  };
-
   const openEditModal = (user) => {
     setCurrentUser({
-      ...user,
-      password: "", // Don't show existing password
+      email: user.email,
+      role: user.role,
     });
     setIsEditing(true);
     setIsAddEditModalOpen(true);
-  };
-
-  const openDeleteModal = (user) => {
-    setCurrentUser(user);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (currentUser) {
-      try {
-        const response = await fetch(
-          `http://localhost:5000/users/${currentUser._id}`,
-          {
-            method: "DELETE",
-            credentials: "include",
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to delete user");
-        }
-
-        setUsers(users.filter((user) => user._id !== currentUser._id));
-        setIsDeleteModalOpen(false);
-      } catch (err) {
-        setError(err.message);
-      }
-    }
   };
 
   const handleAddEdit = async (e) => {
     e.preventDefault();
 
     try {
-      if (isEditing) {
-        // Update existing user
-        const response = await fetch(
-          `http://localhost:5000/users/${currentUser._id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({
-              firstName: currentUser.firstName,
-              lastName: currentUser.lastName,
-              email: currentUser.email,
-              displayName: currentUser.displayName,
-              role: currentUser.role,
-              ...(currentUser.password && { password: currentUser.password }),
-            }),
-          }
-        );
+      const response = await fetch("http://localhost:5000/users/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email: currentUser.email,
+          role: currentUser.role,
+        }),
+      });
 
-        if (!response.ok) {
-          throw new Error("Failed to update user");
-        }
-
-        const updatedUser = await response.json();
-        setUsers(
-          users.map((user) =>
-            user._id === updatedUser._id ? updatedUser : user
-          )
-        );
-      } else {
-        // Add new user
-        const response = await fetch("http://localhost:5000/users", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            firstName: currentUser.firstName,
-            lastName: currentUser.lastName,
-            email: currentUser.email,
-            displayName:
-              currentUser.displayName ||
-              `${currentUser.firstName} ${currentUser.lastName}`,
-            password: currentUser.password,
-            role: currentUser.role,
-            profilePhoto: currentUser.profilePhoto,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to create user");
-        }
-
-        const newUser = await response.json();
-        setUsers([...users, newUser]);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update user role");
       }
 
+      const result = await response.json();
+      // Update the user's role in the local state
+      setUsers(
+        users.map((user) =>
+          user.email === currentUser.email
+            ? { ...user, role: currentUser.role }
+            : user
+        )
+      );
       setIsAddEditModalOpen(false);
     } catch (err) {
       setError(err.message);
@@ -242,7 +163,7 @@ const UsersPage = () => {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-white">User Management</h1>
             <p className="text-slate-400 mt-2">
-              Manage user accounts and permissions
+              Manage user roles and permissions
             </p>
           </div>
 
@@ -260,12 +181,6 @@ const UsersPage = () => {
                 className="pl-10 w-full bg-slate-900 border-slate-800 text-white placeholder:text-slate-400"
               />
             </div>
-            <Button
-              onClick={openAddModal}
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add New User
-            </Button>
           </div>
 
           <div className="bg-slate-900/50 border-slate-800 rounded-lg">
@@ -275,8 +190,6 @@ const UsersPage = () => {
                   <TableHead className="text-slate-400">User</TableHead>
                   <TableHead className="text-slate-400">Email</TableHead>
                   <TableHead className="text-slate-400">Role</TableHead>
-                  <TableHead className="text-slate-400">Status</TableHead>
-                  <TableHead className="text-slate-400">Location</TableHead>
                   <TableHead className="text-slate-400">Join Date</TableHead>
                   <TableHead className="text-slate-400 text-right">
                     Actions
@@ -325,27 +238,8 @@ const UsersPage = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          user.status === "active" ? "default" : "secondary"
-                        }
-                        className={
-                          user.status === "active"
-                            ? "bg-emerald-500/10 text-emerald-500"
-                            : "bg-red-500/10 text-red-500"
-                        }
-                      >
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
                       <div className="text-sm text-slate-400">
-                        {user.location}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm text-slate-400">
-                        {user.joinDate}
+                        {new Date(user.createdAt).toLocaleDateString()}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -356,14 +250,6 @@ const UsersPage = () => {
                         className="text-slate-400 hover:text-white hover:bg-slate-800"
                       >
                         <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openDeleteModal(user)}
-                        className="text-slate-400 hover:text-red-500 hover:bg-red-500/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -420,102 +306,10 @@ const UsersPage = () => {
       <Dialog open={isAddEditModalOpen} onOpenChange={setIsAddEditModalOpen}>
         <DialogContent className="bg-slate-900 border-slate-800">
           <DialogHeader>
-            <DialogTitle className="text-white">
-              {isEditing ? "Edit User" : "Add New User"}
-            </DialogTitle>
+            <DialogTitle className="text-white">Update User Role</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleAddEdit}>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName" className="text-slate-400">
-                  First Name
-                </Label>
-                <Input
-                  id="firstName"
-                  name="firstName"
-                  value={currentUser?.firstName || ""}
-                  onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="lastName" className="text-slate-400">
-                  Last Name
-                </Label>
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  value={currentUser?.lastName || ""}
-                  onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
-                  required
-                />
-              </div>
-
-              <div className="col-span-2">
-                <Label htmlFor="email" className="text-slate-400">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={currentUser?.email || ""}
-                  onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
-                  required
-                />
-              </div>
-
-              <div className="col-span-2">
-                <Label htmlFor="displayName" className="text-slate-400">
-                  Display Name
-                </Label>
-                <Input
-                  id="displayName"
-                  name="displayName"
-                  value={currentUser?.displayName || ""}
-                  onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
-                  required
-                />
-              </div>
-
-              {!isEditing && (
-                <div className="col-span-2">
-                  <Label htmlFor="password" className="text-slate-400">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={currentUser?.password || ""}
-                    onChange={handleInputChange}
-                    className="bg-slate-800 border-slate-700 text-white"
-                    required={!isEditing}
-                  />
-                </div>
-              )}
-
-              {isEditing && (
-                <div className="col-span-2">
-                  <Label htmlFor="password" className="text-slate-400">
-                    New Password (leave blank to keep current)
-                  </Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={currentUser?.password || ""}
-                    onChange={handleInputChange}
-                    className="bg-slate-800 border-slate-700 text-white"
-                  />
-                </div>
-              )}
-
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <Label htmlFor="role" className="text-slate-400">
                   Role
@@ -548,38 +342,10 @@ const UsersPage = () => {
                 Cancel
               </Button>
               <Button type="submit" className="bg-blue-600 hover:bg-blue-500">
-                {isEditing ? "Save Changes" : "Add User"}
+                Update Role
               </Button>
             </DialogFooter>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800">
-          <DialogHeader>
-            <DialogTitle className="text-white">Delete User</DialogTitle>
-            <DialogDescription className="text-slate-400">
-              Are you sure you want to delete {currentUser?.firstName}{" "}
-              {currentUser?.lastName}? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="border-slate-700 text-slate-400 hover:bg-slate-800"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-500"
-            >
-              Delete
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
