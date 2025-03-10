@@ -20,7 +20,7 @@ export default function LoginPage() {
     console.log("Google login triggered");
     const backendUrl =
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-    window.location.href = `${backendUrl}/auth/google`;
+    window.location.href = `${backendUrl}/users/google`;
   };
 
   //login the get user if the user already exists if not redirect it to signup page
@@ -28,7 +28,7 @@ export default function LoginPage() {
     e.preventDefault(); // Add this to prevent form submission
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/auth/login", {
+      const response = await fetch("http://localhost:5000/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
     const checkAuth = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5000/auth/current-user",
+          "http://localhost:5000/users/current-user",
           {
             credentials: "include",
           }
