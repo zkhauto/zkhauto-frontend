@@ -16,6 +16,36 @@ const Navbar = () => {
     router.push("/profile");
   };
 
+  // Define navigation links based on user status
+  const getNavigationLinks = () => {
+    // Default links for non-logged in users
+    const publicLinks = [
+      { href: "/", label: "Home" },
+      { href: "/carlisting", label: "Car Listings" },
+      { href: "/contact", label: "Contact Us" },
+    ];
+
+    // Additional links for logged-in users
+    const authenticatedLinks = [
+      ...publicLinks,
+      { href: "/appointments", label: "Appointments" },
+      { href: "/booking", label: "Booking and Visiting" },
+    ];
+
+    // Admin link
+    const adminLink = { href: "/dashboard", label: "Admin" };
+
+    if (!user) {
+      return publicLinks;
+    }
+
+    if (user.role === "admin") {
+      return [...authenticatedLinks, adminLink];
+    }
+
+    return authenticatedLinks;
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -27,42 +57,15 @@ const Navbar = () => {
         <span className="text-blue-400"> Selling</span>
       </h1>
       <div className="hidden md:flex space-x-6">
-        <Link
-          href="/"
-          className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
-        >
-          Home
-        </Link>
-        <Link
-          href="/carlisting"
-          className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
-        >
-          Car Listings
-        </Link>
-        <Link
-          href="/appointments"
-          className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
-        >
-          Appointments
-        </Link>
-        <Link
-          href="/booking"
-          className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
-        >
-          Booking and Visiting
-        </Link>
-        <Link
-          href="/contact"
-          className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
-        >
-          Contact Us
-        </Link>
-        <Link
-          href="/dashboard"
-          className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
-        >
-          Admin
-        </Link>
+        {getNavigationLinks().map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="border-b-2 border-transparent hover:border-blue-400 transition-colors"
+          >
+            {link.label}
+          </Link>
+        ))}
       </div>
       <div className="space-x-4">
         {!user ? (
@@ -71,7 +74,7 @@ const Navbar = () => {
               <Link href="/login">Login</Link>
             </Button>
             <Button className="bg-white text-gray-900 px-4 py-2 rounded hover:bg-blue-500 hover:text-white">
-              Sign Up
+              <Link href="/signup">Sign Up</Link>
             </Button>
           </>
         ) : (

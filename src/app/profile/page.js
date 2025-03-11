@@ -16,19 +16,28 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../ui/Navbar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Toaster, toast } from "sonner";
 
 export default function UserProfileEdit() {
   const { user, loading, setUser } = useAuth();
   const router = useRouter();
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  // if (!user) {
-  //   router.push("/login");
-  //   return null;
-  // }
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
@@ -57,9 +66,67 @@ export default function UserProfileEdit() {
     }
   };
 
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError(null);
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters long");
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://localhost:5000/users/update-password",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            email: user.email,
+            password: newPassword,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update password");
+      }
+
+      setNewPassword("");
+      setConfirmPassword("");
+      setIsChangePasswordOpen(false);
+      toast.success("Password updated successfully");
+    } catch (error) {
+      setPasswordError(error.message);
+      toast.error(error.message);
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-slate-950">
+        <Toaster
+          theme="dark"
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: "#1e293b",
+              border: "1px solid #334155",
+              color: "#fff",
+            },
+          }}
+        />
         <Navbar />
         {/* Top Navigation Bar */}
         <div className="bg-slate-900/50 border-b border-slate-800 py-4">
@@ -298,6 +365,7 @@ export default function UserProfileEdit() {
                 <div className="flex items-center gap-4">
                   <Button
                     variant="outline"
+                    onClick={() => setIsChangePasswordOpen(true)}
                     className="flex-1 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
                   >
                     <Key className="h-4 w-4 mr-2" />
@@ -323,6 +391,70 @@ export default function UserProfileEdit() {
             </Card>
           </div>
         </div>
+
+        <Dialog
+          open={isChangePasswordOpen}
+          onOpenChange={setIsChangePasswordOpen}
+        >
+          <DialogContent className="bg-slate-900 border-slate-800">
+            <DialogHeader>
+              <DialogTitle className="text-white">Change Password</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handlePasswordChange}>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="password" className="text-slate-400">
+                    New Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="bg-slate-800 border-slate-700 text-white"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="confirmPassword" className="text-slate-400">
+                    Confirm Password
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="bg-slate-800 border-slate-700 text-white"
+                    required
+                    minLength={6}
+                  />
+                  {passwordError && (
+                    <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsChangePasswordOpen(false);
+                    setNewPassword("");
+                    setConfirmPassword("");
+                    setPasswordError(null);
+                  }}
+                  className="border-slate-700 text-slate-400 hover:bg-slate-800"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-500">
+                  Update Password
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </ProtectedRoute>
   );
