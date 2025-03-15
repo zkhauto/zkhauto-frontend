@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import user_img from "../../../public/img/user_img.png";
 import { useAuth } from "../context/AuthContext";
@@ -28,8 +27,8 @@ const Navbar = () => {
     // Additional links for logged-in users
     const authenticatedLinks = [
       ...publicLinks,
-      { href: "/appointments", label: "Appointments" },
-      { href: "/booking", label: "Booking and Visiting" },
+      { href: "/appointments", label: "Booking and Visiting" },
+      // { href: "/booking", label: "Booking and Visiting" },
     ];
 
     // Admin link

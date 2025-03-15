@@ -32,8 +32,8 @@ const TestDriveBooking = () => {
   const [date, setDate] = useState();
   const [time, setTime] = useState("");
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    name: user?.firstName + " " + user?.lastName,
+    email: user?.email,
     phone: "",
     date: "",
     time: "",
@@ -67,9 +67,9 @@ const TestDriveBooking = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    console.log("formData", formData);
     try {
-      const response = await fetch("http://localhost:5000/API/test-drives", {
+      const response = await fetch("http://localhost:5000/api/test-drive", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -78,11 +78,12 @@ const TestDriveBooking = () => {
       });
       if (response.ok) {
         const newTestDrive = await response.json();
+
         setTestDrives((prev) => [...prev, newTestDrive]);
         alert("Test drive booked successfully!");
         setFormData({
-          name: "",
-          email: "",
+          name: user?.firstName + " " + user?.lastName,
+          email: user?.email,
           phone: "",
           date: "",
           time: "",
@@ -135,12 +136,12 @@ const TestDriveBooking = () => {
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
                     <Input
-                      id="name"
-                      name="name"
-                      value={`${user?.firstName} ${user?.lastName}  `}
-                      onChange={handleInputChange}
+                      // id="name"
+                      // name="name"
+                      defaultValue={`${user?.firstName} ${user?.lastName}  `}
+                      // onChange={handleInputChange}
                       placeholder="Enter your name"
-                      required
+                      readOnly
                     />
                   </div>
 
@@ -148,13 +149,13 @@ const TestDriveBooking = () => {
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
                       <Input
-                        id="email"
-                        name="email"
+                        // id="email"
+                        // name="email"
                         type="email"
-                        value={user?.email}
-                        onChange={handleInputChange}
+                        defaultValue={user?.email}
+                        // onChange={handleInputChange}
                         placeholder="example@example.com"
-                        required
+                        readOnly
                       />
                     </div>
                     <div className="space-y-2">

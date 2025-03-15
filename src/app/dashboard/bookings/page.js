@@ -87,8 +87,9 @@ const AdminTestDrives = () => {
 
   // Handle delete
   const handleDelete = async (id) => {
+    console.log("Deleting test drive with id:", id);
     try {
-      await fetch(`http://localhost:5000/test-drives/${id}`, {
+      await fetch(`http://localhost:5000/api/test-drives/${id}`, {
         method: "DELETE",
       });
       setTestDrives((prev) => prev.filter((drive) => drive._id !== id));
@@ -153,6 +154,7 @@ const AdminTestDrives = () => {
                   <TableHead className="text-slate-400">Email</TableHead>
                   <TableHead className="text-slate-400">Car Model</TableHead>
                   <TableHead className="text-slate-400">Date & Time</TableHead>
+                  <TableHead className="text-slate-400">Notes</TableHead>
                   <TableHead className="text-slate-400">Status</TableHead>
                   <TableHead className="text-slate-400 text-right">
                     Actions
@@ -171,6 +173,9 @@ const AdminTestDrives = () => {
                     </TableCell>
                     <TableCell className="text-slate-400">
                       {drive.date} at {drive.time}
+                    </TableCell>
+                    <TableCell className="text-slate-400">
+                      {drive.notes}
                     </TableCell>
                     <TableCell>
                       <Badge
