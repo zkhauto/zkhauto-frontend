@@ -1,92 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Search, X, ChevronDown, Star, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, X, ChevronDown, Star, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Navbar from "../ui/Navbar";
-// Sample data for demonstration
-const demodata = [
-  {
-    id: 1,
-    make: "Toyota",
-    model: "Camry",
-    type: "Sedan",
-    steering: "Left",
-    year: 2022,
-    price: 25000,
-    mileage: 15000,
-    image: "/placeholder.svg?height=200&width=300",
-    location: "New York, NY",
-    rating: 4.8,
-  },
-  {
-    id: 2,
-    make: "Honda",
-    model: "Civic",
-    type: "Sedan",
-    steering: "Left",
-    year: 2021,
-    price: 22000,
-    mileage: 18000,
-    image: "/placeholder.svg?height=200&width=300",
-    location: "Los Angeles, CA",
-    rating: 4.6,
-  },
-  {
-    id: 3,
-    make: "Tesla",
-    model: "Model 3",
-    type: "Sedan",
-    steering: "Left",
-    year: 2023,
-    price: 45000,
-    mileage: 5000,
-    image: "/placeholder.svg?height=200&width=300",
-    location: "San Francisco, CA",
-    rating: 4.9,
-  },
-  {
-    id: 4,
-    make: "BMW",
-    model: "X5",
-    type: "SUV",
-    steering: "Left",
-    year: 2022,
-    price: 62000,
-    mileage: 12000,
-    image: "/placeholder.svg?height=200&width=300",
-    location: "Chicago, IL",
-    rating: 4.7,
-  },
-  {
-    id: 5,
-    make: "Mercedes",
-    model: "C-Class",
-    type: "Sedan",
-    steering: "Left",
-    year: 2021,
-    price: 48000,
-    mileage: 20000,
-    image: "/placeholder.svg?height=200&width=300",
-    location: "Miami, FL",
-    rating: 4.5,
-  },
-  {
-    id: 6,
-    make: "Audi",
-    model: "Q7",
-    type: "SUV",
-    steering: "Right",
-    year: 2023,
-    price: 70000,
-    mileage: 8000,
-    image: "/placeholder.svg?height=200&width=300",
-    location: "Seattle, WA",
-    rating: 4.8,
-  },
-];
+import ImageGallery from "../components/ImageGallery";
 
 const CarListing = () => {
+  const [cars, setCars] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
@@ -94,6 +17,57 @@ const CarListing = () => {
   const [steering, setSteering] = useState("");
   const [minYear, setMinYear] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [fuel, setFuel] = useState("");
+  const [transmission, setTransmission] = useState("");
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
+
+  const [selectedCar, setSelectedCar] = useState(null);
+  const [showGallery, setShowGallery] = useState(false);
+
+  useEffect(() => {
+    fetchCars();
+  }, [currentPage]); // Refetch when page changes
+
+  const fetchCars = async () => {
+    try {
+      const response = await fetch('/api/cars');
+      if (!response.ok) {
+        throw new Error('Failed to fetch cars');
+      }
+      const data = await response.json();
+      
+      console.log('Raw data from API:', data);
+      console.log('Number of cars:', data.length);
+      console.log('First few cars:', data.slice(0, 3));
+
+      // Use the URLs directly from the API
+      setCars(data);
+      setTotalPages(Math.ceil(data.length / itemsPerPage));
+    } catch (err) {
+      console.error("Error details:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get current page items
+  const getCurrentPageItems = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return cars.slice(startIndex, endIndex);
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const handleInputChange = (e, setter) => {
     setter(e.target.value);
@@ -111,6 +85,8 @@ const CarListing = () => {
     setType("");
     setSteering("");
     setMinYear("");
+    setFuel("");
+    setTransmission("");
   };
 
   const formatPrice = (price) => {
@@ -123,6 +99,11 @@ const CarListing = () => {
 
   const formatMileage = (mileage) => {
     return new Intl.NumberFormat("en-US").format(mileage) + " mi";
+  };
+
+  const handleImageClick = (car) => {
+    setSelectedCar(car);
+    setShowGallery(true);
   };
 
   return (
@@ -190,7 +171,7 @@ const CarListing = () => {
                 />
               </button>
 
-              {(make || model || type || steering || minYear) && (
+              {(make || model || type || steering || minYear || fuel || transmission) && (
                 <button
                   onClick={clearFilters}
                   className="text-sm text-gray-400 hover:text-white transition-colors"
@@ -208,27 +189,16 @@ const CarListing = () => {
                   onChange={(e) => handleInputChange(e, setMake)}
                   className="bg-gray-700 text-white px-4 py-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 >
-                  <option value="">Make (Any)</option>
-                  <option value="toyota">Toyota</option>
-                  <option value="honda">Honda</option>
-                  <option value="tesla">Tesla</option>
-                  <option value="bmw">BMW</option>
-                  <option value="mercedes">Mercedes</option>
+                  <option value="">Brand (Any)</option>
                   <option value="audi">Audi</option>
-                </select>
-
-                <select
-                  value={model}
-                  onChange={(e) => handleInputChange(e, setModel)}
-                  className="bg-gray-700 text-white px-4 py-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                >
-                  <option value="">Model (Any)</option>
-                  <option value="camry">Camry</option>
-                  <option value="civic">Civic</option>
-                  <option value="model3">Model 3</option>
-                  <option value="x5">X5</option>
-                  <option value="c-class">C-Class</option>
-                  <option value="q7">Q7</option>
+                  <option value="bentley">Bentley</option>
+                  <option value="bmw">BMW</option>
+                  <option value="ferrari">Ferrari</option>
+                  <option value="lamborghini">Lamborghini</option>
+                  <option value="mclaren">McLaren</option>
+                  <option value="mercedes-benz">Mercedes-Benz</option>
+                  <option value="porsche">Porsche</option>
+                  <option value="rolls-royce">Rolls-Royce</option>
                 </select>
 
                 <select
@@ -237,21 +207,41 @@ const CarListing = () => {
                   className="bg-gray-700 text-white px-4 py-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 >
                   <option value="">Type (Any)</option>
-                  <option value="sedan">Sedan</option>
-                  <option value="suv">SUV</option>
-                  <option value="coupe">Coupe</option>
-                  <option value="truck">Truck</option>
-                  <option value="hatchback">Hatchback</option>
+                  <option value="SUV">SUV</option>
+                  <option value="Sedan">Sedan</option>
+                  <option value="Truck">Truck</option>
+                  <option value="Van">Van</option>
+                  <option value="Coupe">Coupe</option>
+                  <option value="Wagon">Wagon</option>
+                  <option value="Convertible">Convertible</option>
+                  <option value="Hatchback">Hatchback</option>
                 </select>
 
                 <select
-                  value={steering}
-                  onChange={(e) => handleInputChange(e, setSteering)}
+                  value={fuel}
+                  onChange={(e) => handleInputChange(e, setFuel)}
                   className="bg-gray-700 text-white px-4 py-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 >
-                  <option value="">Steering (Any)</option>
-                  <option value="left">Left</option>
-                  <option value="right">Right</option>
+                  <option value="">Fuel Type (Any)</option>
+                  <option value="Gasoline">Gasoline</option>
+                  <option value="Diesel">Diesel</option>
+                  <option value="Electric">Electric</option>
+                  <option value="Hybrid">Hybrid</option>
+                  <option value="Plug-in Hybrid">Plug-in Hybrid</option>
+                  <option value="Hydrogen">Hydrogen</option>
+                </select>
+
+                <select
+                  value={transmission}
+                  onChange={(e) => handleInputChange(e, setTransmission)}
+                  className="bg-gray-700 text-white px-4 py-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option value="">Transmission (Any)</option>
+                  <option value="Manual">Manual</option>
+                  <option value="Automatic">Automatic</option>
+                  <option value="CVT">CVT</option>
+                  <option value="DCT">DCT</option>
+                  <option value="Semi-Automatic">Semi-Automatic</option>
                 </select>
 
                 <select
@@ -275,7 +265,7 @@ const CarListing = () => {
           {/* Results Count */}
           <div className="flex justify-between items-center max-w-7xl mx-auto mb-6">
             <h2 className="text-xl font-semibold text-white">
-              {demodata.length} vehicles found
+              {cars.length} vehicles found (Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, cars.length)})
             </h2>
             <select
               className="bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
@@ -289,67 +279,163 @@ const CarListing = () => {
             </select>
           </div>
 
-          {/* Car Listing */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {demodata.map((car) => (
-              <div
-                key={car.id}
-                className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:translate-y-[-4px] group"
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src={car.image || "/placeholder.svg"}
-                    alt={`${car.make} ${car.model}`}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-3 right-3 bg-gray-900/80 backdrop-blur-sm rounded-full px-3 py-1 text-sm text-white font-medium">
-                    {car.year}
+          {/* Car Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
+            {loading ? (
+              <div className="col-span-full text-center text-white">Loading cars...</div>
+            ) : error ? (
+              <div className="col-span-full text-center text-red-500">{error}</div>
+            ) : getCurrentPageItems().length === 0 ? (
+              <div className="col-span-full text-center text-white">No cars found</div>
+            ) : (
+              getCurrentPageItems().map((car) => (
+                <div
+                  key={car._id}
+                  className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow"
+                >
+                  <div 
+                    className="relative h-48 cursor-pointer group"
+                    onClick={() => handleImageClick(car)}
+                  >
+                    <Image
+                      src={car.images?.[0]?.url || "/images/placeholder-car.jpg"}
+                      alt={`${car.brand} ${car.model}`}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover"
+                      priority={true}
+                      quality={75}
+                      loading="eager"
+                      unoptimized={true}
+                      onError={(e) => {
+                        console.error('Image load error for', car.brand, car.model, ':', car.images?.[0]?.url);
+                        e.target.src = "/images/placeholder-car.jpg";
+                      }}
+                    />
+                    {car.images && car.images.length > 1 && (
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <span className="text-white text-sm font-medium">
+                          +{car.images.length - 1} more photos
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </div>
-
-                <div className="p-5">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-bold text-white">
-                      {car.make} {car.model}
-                    </h3>
-                    <div className="flex items-center gap-1 bg-gray-700/50 rounded-full px-2 py-1">
-                      <Star
-                        size={14}
-                        className="text-yellow-400 fill-yellow-400"
-                      />
-                      <span className="text-sm text-white">{car.rating}</span>
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-semibold text-white">
+                          {car.brand} {car.model}
+                        </h3>
+                        <p className="text-gray-400">{car.year}</p>
+                      </div>
+                      <div className="flex items-center">
+                        <Star className="h-5 w-5 text-yellow-400 fill-current" />
+                        <span className="ml-1 text-white">{car.rating}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm text-gray-300">
+                      <p>Type: {car.type}</p>
+                      <p>Fuel: {car.fuel}</p>
+                      <p>Transmission: {car.engineTransmission}</p>
+                      <p>Mileage: {formatMileage(car.mileage)}</p>
+                      <p>Status: {car.status}</p>
+                      <p>Color: {car.color}</p>
+                    </div>
+                    <div className="mt-6 flex justify-between items-center">
+                      <span className="text-2xl font-bold text-white">
+                        {formatPrice(car.price)}
+                      </span>
+                      <button className="bg-primary hover:bg-primary/90 px-4 py-2 rounded-lg text-white font-medium transition-colors">
+                        View Details
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded-md text-xs">
-                      {car.type}
-                    </span>
-                    <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded-md text-xs">
-                      {car.steering} Hand
-                    </span>
-                    <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded-md text-xs">
-                      {formatMileage(car.mileage)}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center text-gray-400 text-sm mb-4">
-                    <span>{car.location}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="text-2xl font-bold text-white">
-                      {formatPrice(car.price)}
-                    </div>
-                    <button className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                      View Details
-                    </button>
-                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
+
+          {/* Image Gallery Modal */}
+          {selectedCar && (
+            <ImageGallery
+              images={selectedCar.images || []}
+              isOpen={showGallery}
+              onClose={() => {
+                setShowGallery(false);
+                setSelectedCar(null);
+              }}
+            />
+          )}
+
+          {/* Pagination */}
+          {!loading && !error && cars.length > 0 && (
+            <div className="flex justify-center items-center space-x-4 mt-8">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-lg ${
+                  currentPage === 1
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    : 'bg-primary text-white hover:bg-primary/90'
+                }`}
+              >
+                <ChevronLeft size={20} />
+              </button>
+              
+              <div className="flex items-center space-x-2">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`w-10 h-10 rounded-lg ${
+                        currentPage === pageNum
+                          ? 'bg-primary text-white'
+                          : 'bg-gray-700 text-white hover:bg-gray-600'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                
+                {totalPages > 5 && currentPage < totalPages - 2 && (
+                  <>
+                    <span className="text-white">...</span>
+                    <button
+                      onClick={() => handlePageChange(totalPages)}
+                      className="w-10 h-10 rounded-lg bg-gray-700 text-white hover:bg-gray-600"
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg ${
+                  currentPage === totalPages
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    : 'bg-primary text-white hover:bg-primary/90'
+                }`}
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </main>

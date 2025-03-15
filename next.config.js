@@ -1,11 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      "via.placeholder.com",
-      "lh3.googleusercontent.com", // For Google profile photos
-      "googleusercontent.com",
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        port: '',
+        pathname: '/zkhauto_bucket/**',
+      },
     ],
+    unoptimized: true,
   },
 };
 
