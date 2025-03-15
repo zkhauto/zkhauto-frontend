@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { CalendarIcon, Trash2 } from "lucide-react";
-import { format } from "date-fns";
-import Navbar from "../ui/Navbar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -14,26 +12,23 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { CalendarIcon, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import Navbar from "../ui/Navbar";
 
-const Appointments = () => {
-  const [appointments, setAppointments] = useState([]);
+const TestDriveBooking = () => {
+  const { user } = useAuth();
+  const [testDrives, setTestDrives] = useState([]);
   const [date, setDate] = useState();
   const [time, setTime] = useState("");
   const [formData, setFormData] = useState({
@@ -42,8 +37,7 @@ const Appointments = () => {
     phone: "",
     date: "",
     time: "",
-    period: "AM",
-    reason: "",
+    carModel: "",
     notes: "",
   });
 
@@ -71,32 +65,47 @@ const Appointments = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setAppointments((prev) => [
-      ...prev,
-      {
-        ...formData,
-        time: `${formData.time} ${formData.period}`,
-        id: Date.now(),
-      },
-    ]);
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      date: "",
-      time: "",
-      period: "AM",
-      reason: "",
-      notes: "",
-    });
-    setDate(undefined);
-    setTime("");
+
+    try {
+      const response = await fetch("http://localhost:5000/API/test-drives", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      if (response.ok) {
+        const newTestDrive = await response.json();
+        setTestDrives((prev) => [...prev, newTestDrive]);
+        alert("Test drive booked successfully!");
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          date: "",
+          time: "",
+          carModel: "",
+          notes: "",
+        });
+        setDate(undefined);
+        setTime("");
+      }
+    } catch (error) {
+      console.error("Error booking test drive:", error);
+    }
   };
 
-  const handleDelete = (id) => {
-    setAppointments((prev) => prev.filter((app) => app.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await fetch(`/api/test-drives/${id}`, {
+        method: "DELETE",
+      });
+      setTestDrives((prev) => prev.filter((drive) => drive._id !== id));
+    } catch (error) {
+      console.error("Error deleting test drive:", error);
+    }
   };
 
   return (
@@ -105,32 +114,32 @@ const Appointments = () => {
       <div className="container mx-auto py-8 px-4 bg-gray-900 text-white min-h-screen mt-12">
         <div className="flex flex-col items-center mb-8">
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-2">
-            Appointments Manager
+            Test Drive Booking
           </h1>
           <p className="text-xl text-muted-foreground">
-            Schedule and manage patient appointments
+            Schedule and manage car test drives
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 rounded-lg p-4">
           <Card className="lg:col-span-1">
             <CardHeader className="bg-gray-300">
-              <CardTitle>Schedule New Appointment</CardTitle>
+              <CardTitle>Book a Test Drive</CardTitle>
               <CardDescription>
-                Fill out the form to create a new appointment
+                Fill out the form to schedule a test drive
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Patient Name</Label>
+                    <Label htmlFor="name">Full Name</Label>
                     <Input
                       id="name"
                       name="name"
-                      value={formData.name}
+                      value={`${user?.firstName} ${user?.lastName}  `}
                       onChange={handleInputChange}
-                      placeholder="Enter patient name"
+                      placeholder="Enter your name"
                       required
                     />
                   </div>
@@ -142,9 +151,9 @@ const Appointments = () => {
                         id="email"
                         name="email"
                         type="email"
-                        value={formData.email}
+                        value={user?.email}
                         onChange={handleInputChange}
-                        placeholder="patient@example.com"
+                        placeholder="example@example.com"
                         required
                       />
                     </div>
@@ -160,6 +169,18 @@ const Appointments = () => {
                         required
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="carModel">Car Model</Label>
+                    <Input
+                      id="carModel"
+                      name="carModel"
+                      value={formData.carModel}
+                      onChange={handleInputChange}
+                      placeholder="Enter car model"
+                      required
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -190,37 +211,15 @@ const Appointments = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="time">Time</Label>
-                      <div className="flex gap-2">
-                        <Select
-                          value={formData.period}
-                          onValueChange={(value) =>
-                            handleInputChange({
-                              target: { name: "period", value },
-                            })
-                          }
-                        >
-                          <SelectTrigger className="w-[160px]">
-                            <SelectValue placeholder="Select time" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="AM">12:00 AM</SelectItem>
-                            <SelectItem value="PM">12:00 PM</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <Input
+                        id="time"
+                        name="time"
+                        type="time"
+                        value={formData.time}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="reason">Reason for Visit</Label>
-                    <Input
-                      id="reason"
-                      name="reason"
-                      value={formData.reason}
-                      onChange={handleInputChange}
-                      placeholder="Brief description of visit reason"
-                      required
-                    />
                   </div>
 
                   <div className="space-y-2">
@@ -230,14 +229,14 @@ const Appointments = () => {
                       name="notes"
                       value={formData.notes}
                       onChange={handleInputChange}
-                      placeholder="Any additional information or special requirements"
+                      placeholder="Any special requests or notes"
                       rows={3}
                     />
                   </div>
                 </div>
 
                 <Button type="submit" className="w-full">
-                  Schedule Appointment
+                  Book Test Drive
                 </Button>
               </form>
             </CardContent>
@@ -248,40 +247,40 @@ const Appointments = () => {
               <CardHeader className="bg-gray-300">
                 <div className="flex justify-between items-center">
                   <div>
-                    <CardTitle>Upcoming Appointments</CardTitle>
+                    <CardTitle>Upcoming Test Drives</CardTitle>
                     <CardDescription>
-                      Manage scheduled appointments
+                      Manage scheduled test drives
                     </CardDescription>
                   </div>
                   <Badge variant="outline" className="bg-gray-800 text-white">
-                    {appointments.length} Total
+                    {testDrives.length} Total
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                {appointments.length === 0 ? (
+                {testDrives.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-64 text-center">
                     <CalendarIcon className="h-12 w-12 text-muted-foreground mb-4" />
                     <p className="text-muted-foreground">
-                      No appointments scheduled
+                      No test drives scheduled
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Use the form to create your first appointment
+                      Use the form to book your first test drive
                     </p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {appointments.map((appointment) => (
-                      <Card key={appointment.id} className="overflow-hidden">
+                    {testDrives.map((drive) => (
+                      <Card key={drive._id} className="overflow-hidden">
                         <CardHeader className="bg-primary/5 pb-2">
                           <div className="flex justify-between items-start">
                             <CardTitle className="text-lg">
-                              {appointment.name}
+                              {drive.name}
                             </CardTitle>
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDelete(appointment.id)}
+                              onClick={() => handleDelete(drive._id)}
                               className="h-8 w-8 text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -289,33 +288,33 @@ const Appointments = () => {
                           </div>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge variant="outline" className="text-xs">
-                              {appointment.date}
+                              {drive.date}
                             </Badge>
                             <Badge variant="outline" className="text-xs">
-                              {appointment.time}
+                              {drive.time}
                             </Badge>
                           </div>
                         </CardHeader>
                         <CardContent className="pt-4">
                           <div className="space-y-2 text-sm">
                             <div>
-                              <span className="font-medium">Reason:</span>{" "}
-                              {appointment.reason}
+                              <span className="font-medium">Car Model:</span>{" "}
+                              {drive.carModel}
                             </div>
                             <div>
                               <span className="font-medium">Contact:</span>{" "}
-                              {appointment.email}
+                              {drive.email}
                             </div>
                             <div>
                               <span className="font-medium">Phone:</span>{" "}
-                              {appointment.phone}
+                              {drive.phone}
                             </div>
-                            {appointment.notes && (
+                            {drive.notes && (
                               <>
                                 <Separator className="my-2" />
                                 <div>
                                   <span className="font-medium">Notes:</span>{" "}
-                                  {appointment.notes}
+                                  {drive.notes}
                                 </div>
                               </>
                             )}
@@ -334,4 +333,4 @@ const Appointments = () => {
   );
 };
 
-export default Appointments;
+export default TestDriveBooking;
