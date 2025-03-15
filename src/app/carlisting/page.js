@@ -8,6 +8,7 @@ import ImageGallery from "../components/ImageGallery";
 
 const CarListing = () => {
   const [cars, setCars] = useState([]);
+  const [filteredCars, setFilteredCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -32,6 +33,86 @@ const CarListing = () => {
     fetchCars();
   }, [currentPage]); // Refetch when page changes
 
+  useEffect(() => {
+    // Apply filters whenever search or filter values change
+    if (!cars.length) return;
+
+    let filtered = [...cars];
+
+    // Apply search filter
+    if (search.trim()) {
+      const searchTerm = search.toLowerCase().trim();
+      const searchWords = searchTerm
+        .split(/[\s,-]+/)
+        .filter(word => word.length > 0)
+        .filter(word => !['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to'].includes(word));
+
+      console.log('Searching for words:', searchWords);
+
+      filtered = filtered.filter(car => {
+        const searchableText = [
+          car.brand,
+          car.model,
+          car.year?.toString()
+        ]
+          .filter(Boolean)
+          .map(field => field.toLowerCase())
+          .join(' ');
+
+        return searchWords.every(word => searchableText.includes(word));
+      });
+    }
+
+    // Apply make filter
+    if (make) {
+      filtered = filtered.filter(car => car.brand?.toLowerCase() === make.toLowerCase());
+    }
+
+    // Apply type filter
+    if (type) {
+      filtered = filtered.filter(car => car.type?.toLowerCase() === type.toLowerCase());
+    }
+
+    // Apply steering filter
+    if (steering) {
+      filtered = filtered.filter(car => car.steering?.toLowerCase() === steering.toLowerCase());
+    }
+
+    // Apply year filter
+    if (minYear) {
+      filtered = filtered.filter(car => car.year >= parseInt(minYear));
+    }
+
+    // Apply fuel filter
+    if (fuel) {
+      filtered = filtered.filter(car => car.fuel?.toLowerCase() === fuel.toLowerCase());
+    }
+
+    // Apply transmission filter
+    if (transmission) {
+      filtered = filtered.filter(car => car.engineTransmission?.toLowerCase() === transmission.toLowerCase());
+    }
+
+    console.log('Filtering results:', {
+      totalCars: cars.length,
+      filteredCount: filtered.length,
+      activeFilters: {
+        search: search.trim(),
+        make,
+        type,
+        steering,
+        minYear,
+        fuel,
+        transmission
+      }
+    });
+
+    setFilteredCars(filtered);
+    setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+    // Reset to first page when filters change
+    setCurrentPage(1);
+  }, [cars, search, make, type, steering, minYear, fuel, transmission]);
+
   const fetchCars = async () => {
     try {
       const response = await fetch('/api/cars');
@@ -46,6 +127,7 @@ const CarListing = () => {
 
       // Use the URLs directly from the API
       setCars(data);
+      setFilteredCars(data);
       setTotalPages(Math.ceil(data.length / itemsPerPage));
     } catch (err) {
       console.error("Error details:", err);
@@ -59,7 +141,7 @@ const CarListing = () => {
   const getCurrentPageItems = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return cars.slice(startIndex, endIndex);
+    return filteredCars.slice(startIndex, endIndex);
   };
 
   const handlePageChange = (newPage) => {
@@ -74,8 +156,8 @@ const CarListing = () => {
   };
 
   const handleSubmit = () => {
-    // Handle search submission
-    console.log("Search submitted");
+    // No need to do anything here as the useEffect will handle the filtering
+    console.log("Search and filters applied");
   };
 
   const clearFilters = () => {
@@ -104,6 +186,17 @@ const CarListing = () => {
   const handleImageClick = (car) => {
     setSelectedCar(car);
     setShowGallery(true);
+  };
+
+  // Update the results count display
+  const getResultsCountText = () => {
+    if (filteredCars.length === 0) {
+      return "0 vehicles found";
+    }
+    
+    const start = ((currentPage - 1) * itemsPerPage) + 1;
+    const end = Math.min(currentPage * itemsPerPage, filteredCars.length);
+    return `${filteredCars.length} ${filteredCars.length === 1 ? 'vehicle' : 'vehicles'} found (Showing ${start}-${end})`;
   };
 
   return (
@@ -265,7 +358,7 @@ const CarListing = () => {
           {/* Results Count */}
           <div className="flex justify-between items-center max-w-7xl mx-auto mb-6">
             <h2 className="text-xl font-semibold text-white">
-              {cars.length} vehicles found (Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, cars.length)})
+              {getResultsCountText()}
             </h2>
             <select
               className="bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
@@ -368,7 +461,7 @@ const CarListing = () => {
           )}
 
           {/* Pagination */}
-          {!loading && !error && cars.length > 0 && (
+          {!loading && !error && filteredCars.length > 0 && (
             <div className="flex justify-center items-center space-x-4 mt-8">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
