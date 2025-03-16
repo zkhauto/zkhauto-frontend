@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import heroImg from "../../../public/img/hero0.png";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 
@@ -41,12 +40,14 @@ const Hero = () => {
             {/* Right Image Section */}
             <div className="hidden md:block relative w-full md:absolute md:right-[-5%] md:top-1/2 md:-translate-y-1/2 md:w-[55%] lg:w-[50%] md:h-[350px] lg:h-[400px]">
               <Image
-                src={heroImg}
+                src="/img/hero0.png"
                 alt="Luxury SUV"
                 width={1200}
                 height={800}
                 className="object-contain object-center w-full h-full"
-                priority
+                priority={true}
+                loading="eager"
+                quality={90}
               />
             </div>
           </div>

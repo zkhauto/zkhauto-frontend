@@ -282,7 +282,7 @@ const CarListing = () => {
                   onChange={(e) => handleInputChange(e, setMake)}
                   className="bg-gray-700 text-white px-4 py-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 >
-                  <option value="">Brand (Any)</option>
+                  <option value="">brand (Any)</option>
                   <option value="audi">Audi</option>
                   <option value="bentley">Bentley</option>
                   <option value="bmw">BMW</option>

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { toast, Toaster } from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,9 +52,8 @@ const CarListing = () => {
     maxPrice: "",
     minYear: "",
     maxYear: "",
-    type: "",
-    status: "",
-    make: "",
+    type: "all",
+    status: "all"
   });
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -255,18 +255,13 @@ const CarListing = () => {
     }
 
     // Apply type filter
-    if (filters.type) {
+    if (filters.type && filters.type !== "all") {
       filtered = filtered.filter(car => car.type === filters.type);
     }
 
     // Apply status filter
-    if (filters.status) {
+    if (filters.status && filters.status !== "all") {
       filtered = filtered.filter(car => car.status === filters.status);
-    }
-
-    // Apply make/brand filter
-    if (filters.make) {
-      filtered = filtered.filter(car => car.brand === filters.make);
     }
 
     console.log('Final filtering results:', {
@@ -389,20 +384,41 @@ const CarListing = () => {
       maxPrice: "",
       minYear: "",
       maxYear: "",
-      type: "",
-      status: "",
-      make: "",
+      type: "all",
+      status: "all"
     });
   };
 
   // Get unique values for filters
   const uniqueTypes = [...new Set(cars.filter(car => car?.type).map(car => car.type))];
   const uniqueStatuses = [...new Set(cars.filter(car => car?.status).map(car => car.status))];
-  const uniqueMakes = [...new Set(cars.filter(car => car?.brand).map(car => car.brand))];
 
   const openAddModal = () => {
-    setCurrentCar(null);
+    const currentYear = new Date().getFullYear();
+    setCurrentCar({
+      brand: "",
+      model: "",
+      type: "Sedan",
+      steering: "Left",
+      transmission: "Automatic",
+      fuel: "Gasoline",
+      color: "Black",
+      year: currentYear.toString(),
+      price: "",
+      mileage: "",
+      image: "",
+      location: "",
+      status: "available",
+      description: "",
+      driveTrain: "FWD",
+      engineTransmission: "Automatic",
+      engineHorsepower: 0,
+      engineCylinders: 4,
+      engineSize: 2.0,
+      rating: 0
+    });
     setIsEditing(false);
+    setError(null);
     setIsAddEditModalOpen(true);
   };
 
@@ -433,7 +449,7 @@ const CarListing = () => {
         }
 
         await fetchCars(); // Refresh the list after successful deletion
-        setIsDeleteModalOpen(false);
+      setIsDeleteModalOpen(false);
       } catch (err) {
         console.error('Error deleting car:', err);
         setError(err.message || 'Failed to delete car. Please try again.');
@@ -445,71 +461,94 @@ const CarListing = () => {
     e.preventDefault();
 
     try {
-      if (isEditing && currentCar) {
-        // Update existing car
-        const response = await fetch(`http://localhost:5000/api/car/${currentCar._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(currentCar),
-        });
+      console.log("Current car data:", currentCar);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to update car');
-        }
-      } else if (currentCar) {
-        // Add new car
-        const response = await fetch('http://localhost:5000/api/cars', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(currentCar),
-        });
+      // Ensure all numeric fields are properly converted and set default image
+      const carData = {
+        ...currentCar,
+        image: currentCar.image?.trim() || "/placeholder.svg", // Default image if none provided
+        brand: currentCar.brand.trim(),
+        price: Number(currentCar.price),
+        year: Number(currentCar.year),
+        mileage: Number(currentCar.mileage),
+        engineCylinders: Number(currentCar.engineCylinders),
+        engineHorsepower: Number(currentCar.engineHorsepower),
+        rating: Number(currentCar.rating)
+      };
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to add car');
-        }
+      console.log("Processed car data:", carData);
+
+      const isEditing = Boolean(currentCar._id);
+      const url = isEditing 
+        ? `http://localhost:5000/api/car/${currentCar._id}`
+        : "http://localhost:5000/api/cars";
+
+      console.log("Making request to:", url, "with method:", isEditing ? "PUT" : "POST");
+
+      const response = await fetch(url, {
+        method: isEditing ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(carData),
+      });
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      let responseData;
+      if (contentType && contentType.includes("application/json")) {
+        responseData = await response.json();
+      } else {
+        const text = await response.text();
+        throw new Error(`Invalid response format: ${text}`);
       }
 
-      await fetchCars(); // Refresh the list after successful add/edit
+      if (!response.ok) {
+        throw new Error(responseData.message || responseData.error || "Failed to save car");
+      }
+
+      await fetchCars();
       setIsAddEditModalOpen(false);
+      setCurrentCar(null);
+      setError(null);
+      
+      toast.success(isEditing ? "Car has been successfully updated" : "New car has been added");
+
     } catch (err) {
-      console.error('Error saving car:', err);
-      setError(err.message || 'Failed to save car. Please try again.');
+      console.error("Error saving car:", err);
+      setError(err.message || "Failed to save car. Please try again.");
+      toast.error(err.message || "Failed to save car. Please try again.");
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (!currentCar) {
-      // If adding a new car, initialize with default values
-      setCurrentCar({
-        brand: "",
-        model: "",
-        type: "Sedan",
-        steering: "Left",
-        year: new Date().getFullYear(),
-        price: 0,
-        mileage: 0,
-        image: "/placeholder.svg?height=200&width=300",
-        location: "",
-        status: "Active",
-        [name]: value,
-      });
-    } else {
-      // Update existing car
-      setCurrentCar({
-        ...currentCar,
-        [name]:
-          name === "price" || name === "mileage" || name === "year"
-            ? Number(value)
-            : value,
-      });
+    
+    // Special handling for numeric fields
+    if (name === "year") {
+      const yearValue = value === "" ? "" : Number(value);
+      const currentYear = new Date().getFullYear();
+      
+      // Validate year range
+      if (yearValue !== "") {
+        if (yearValue < 1900) return;
+        if (yearValue > currentYear + 1) return;
+      }
+      
+      setCurrentCar(prev => ({
+        ...prev,
+        year: yearValue
+      }));
+      return;
     }
+    
+    setCurrentCar(prev => ({
+      ...prev,
+      [name]:
+        name === "price" || name === "mileage"
+          ? value === "" ? "" : Number(value)
+          : value,
+    }));
   };
 
   const formatPrice = (price) => {
@@ -520,8 +559,15 @@ const CarListing = () => {
     }).format(price);
   };
 
+  // Add a function to handle image errors
+  const handleImageError = (e) => {
+    e.target.src = "/placeholder.svg"; // Fallback to placeholder image
+    e.target.onerror = null; // Prevent infinite loop if placeholder also fails
+  };
+
   return (
     <div className="flex min-h-screen bg-slate-950">
+      <Toaster position="top-right" />
       <Sidebar />
       <div className="flex-1 ml-64">
         <div className="p-8">
@@ -542,20 +588,20 @@ const CarListing = () => {
             </div>
           ) : (
             <>
-              <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 bg-slate-900/50 border-slate-800 p-4 rounded-lg">
-                <div className="relative w-full sm:w-96">
-                  <Search
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
-                    size={18}
-                  />
-                  <Input
-                    type="text"
-                    placeholder="Search cars..."
-                    value={search}
-                    onChange={handleSearch}
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 bg-slate-900/50 border-slate-800 p-4 rounded-lg">
+            <div className="relative w-full sm:w-96">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                size={18}
+              />
+              <Input
+                type="text"
+                placeholder="Search cars..."
+                value={search}
+                onChange={handleSearch}
                     className="pl-10 bg-slate-800 border-slate-700 text-white"
-                  />
-                </div>
+              />
+            </div>
                 <div className="flex flex-wrap gap-2 items-center">
                   <div className="flex items-center gap-2">
                     <Input
@@ -611,7 +657,7 @@ const CarListing = () => {
                       <SelectValue placeholder="Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Types</SelectItem>
+                      <SelectItem value="all">All Types</SelectItem>
                       {uniqueTypes.map((type) => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
@@ -625,23 +671,9 @@ const CarListing = () => {
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Statuses</SelectItem>
+                      <SelectItem value="all">All Statuses</SelectItem>
                       {uniqueStatuses.map((status) => (
                         <SelectItem key={status} value={status}>{status}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select 
-                    value={filters.make} 
-                    onValueChange={(value) => handleFilterChange("make", value)}
-                  >
-                    <SelectTrigger className="w-32 bg-slate-800 border-slate-700 text-white">
-                      <SelectValue placeholder="Brand" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">All Brands</SelectItem>
-                      {uniqueMakes.map((brand) => (
-                        <SelectItem key={brand} value={brand}>{brand}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -653,9 +685,9 @@ const CarListing = () => {
                     Clear Filters
                   </Button>
                 </div>
-                <Button
-                  onClick={openAddModal}
-                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500"
+            <Button
+              onClick={openAddModal}
+                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2"
                 >
                   <Plus className="mr-2 h-4 w-4" /> Add New Car
                 </Button>
@@ -666,12 +698,6 @@ const CarListing = () => {
                 <div className="text-sm text-slate-400">
                   {filteredCars.length} {filteredCars.length === 1 ? 'vehicle' : 'vehicles'} found
                 </div>
-                <Button
-                  onClick={openAddModal}
-                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500"
-                >
-                  <Plus className="mr-2 h-4 w-4" /> Add New Car
-                </Button>
               </div>
 
               <div className="bg-slate-900/50 border-slate-800 rounded-lg">
@@ -689,104 +715,113 @@ const CarListing = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCars.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-slate-400 py-8">
-                          No cars found matching your filters
+                        {filteredCars.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center text-slate-400 py-8">
+                              No cars found matching your filters
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredCars.map((car) => (
+                            <TableRow key={car._id} className="border-slate-800">
+                        <TableCell>
+                          <div className="flex items-center">
+                            <div className="h-10 w-16 flex-shrink-0 mr-4">
+                              <Image
+                                className="h-10 w-16 rounded object-cover bg-slate-800"
+                                src={car.image || "/placeholder.svg"}
+                                alt={`${car.brand} ${car.model}`}
+                                width={64}
+                                height={40}
+                                onError={(e) => {
+                                  e.target.src = "/placeholder.svg";
+                                  e.target.onerror = null;
+                                }}
+                                priority={false}
+                                loading="lazy"
+                                quality={75}
+                                sizes="64px"
+                                fetchPriority="auto"
+                              />
+                            </div>
+                            <div>
+                                    <div className="font-medium text-white text-lg">
+                                      {car.brand.charAt(0).toUpperCase() + car.brand.slice(1)} {car.model}
+                            </div>
+                                    <div className="text-base text-blue-400 font-semibold">
+                                      Year: {car.year}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                              <div className="text-white font-medium mb-1">
+                                {car.type} • {car.year}
+                              </div>
+                            <div className="text-sm text-slate-400">
+                                    {car.steering} Hand • {car.mileage?.toLocaleString() || 0} mi
+                                  </div>
+                                  <div className="text-sm text-slate-400">
+                                    Transmission: {car.transmission || 'N/A'}
+                                  </div>
+                                  <div className="text-sm text-slate-400">
+                                    Fuel Type: {car.fuel || 'N/A'}
+                                  </div>
+                                  <div className="text-sm text-slate-400">
+                                    Color: {car.color || 'N/A'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-white">
+                            {formatPrice(car.price)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                                    car.status === "available"
+                                ? "default"
+                                      : car.status === "reserved"
+                                ? "secondary"
+                                : "outline"
+                            }
+                            className={
+                                    car.status === "available"
+                                ? "bg-emerald-500/10 text-emerald-500"
+                                      : car.status === "reserved"
+                                ? "bg-yellow-500/10 text-yellow-500"
+                                : "bg-slate-800 text-slate-400"
+                            }
+                          >
+                            {car.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-slate-400">
+                            {car.location}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEditModal(car)}
+                            className="text-slate-400 hover:text-white hover:bg-slate-800"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openDeleteModal(car)}
+                            className="text-slate-400 hover:text-red-500 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      filteredCars.map((car) => (
-                        <TableRow key={car._id} className="border-slate-800">
-                          <TableCell>
-                            <div className="flex items-center">
-                              <div className="h-10 w-16 flex-shrink-0 mr-4">
-                                <Image
-                                  className="h-10 w-16 rounded object-cover"
-                                  src={car.image || "/placeholder.svg"}
-                                  alt={`${car.brand} ${car.model}`}
-                                  width={64}
-                                  height={40}
-                                />
-                              </div>
-                              <div>
-                                <div className="font-medium text-white text-lg">
-                                  {car.brand} {car.model}
-                                </div>
-                                <div className="text-base text-blue-400 font-semibold">
-                                  Year: {car.year}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-white font-medium mb-1">
-                              {car.type} • {car.year}
-                            </div>
-                            <div className="text-sm text-slate-400">
-                              {car.steering} Hand • {car.mileage?.toLocaleString() || 0} mi
-                            </div>
-                            <div className="text-sm text-slate-400">
-                              Transmission: {car.transmission || 'N/A'}
-                            </div>
-                            <div className="text-sm text-slate-400">
-                              Fuel Type: {car.fuel || 'N/A'}
-                            </div>
-                            <div className="text-sm text-slate-400">
-                              Color: {car.color || 'N/A'}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium text-white">
-                              {formatPrice(car.price)}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                car.status === "Active"
-                                  ? "default"
-                                  : car.status === "Pending"
-                                  ? "secondary"
-                                  : "outline"
-                              }
-                              className={
-                                car.status === "Active"
-                                  ? "bg-emerald-500/10 text-emerald-500"
-                                  : car.status === "Pending"
-                                  ? "bg-yellow-500/10 text-yellow-500"
-                                  : "bg-slate-800 text-slate-400"
-                              }
-                            >
-                              {car.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm text-slate-400">
-                              {car.location}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditModal(car)}
-                              className="text-slate-400 hover:text-white hover:bg-slate-800"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openDeleteModal(car)}
-                              className="text-slate-400 hover:text-red-500 hover:bg-red-500/10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
+                          ))
+                        )}
                   </TableBody>
                 </Table>
 
@@ -862,8 +897,16 @@ const CarListing = () => {
             <DialogTitle className="text-white">
               {isEditing ? "Edit Car" : "Add New Car"}
             </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {isEditing ? "Edit car details in your inventory" : "Add a new car to your inventory"}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddEdit}>
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-500">
+                {error}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
                 <Label htmlFor="image" className="text-slate-400">
@@ -879,7 +922,7 @@ const CarListing = () => {
               </div>
 
               <div>
-                <Label htmlFor="brand">Brand</Label>
+                <Label htmlFor="brand" className="text-slate-400">Brand</Label>
                 <Input
                   id="brand"
                   name="brand"
@@ -887,22 +930,25 @@ const CarListing = () => {
                   value={currentCar?.brand || ""}
                   onChange={handleInputChange}
                   className="bg-slate-800 border-slate-700 text-white"
+                  placeholder="Enter car brand name"
                 />
+                <p className="text-sm text-slate-500 mt-1">Enter the brand name </p>
               </div>
 
               <div>
-                <Label htmlFor="model">Model</Label>
+                <Label htmlFor="model" className="text-slate-400">Model</Label>
                 <Input
                   id="model"
                   name="model"
                   required
                   value={currentCar?.model || ""}
                   onChange={handleInputChange}
+                  className="bg-slate-800 border-slate-700 text-white"
                 />
               </div>
 
               <div>
-                <Label htmlFor="type">Type</Label>
+                <Label htmlFor="type" className="text-slate-400">Type</Label>
                 <Select
                   name="type"
                   value={currentCar?.type || "Sedan"}
@@ -910,7 +956,7 @@ const CarListing = () => {
                     handleInputChange({ target: { name: "type", value } })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -924,7 +970,7 @@ const CarListing = () => {
               </div>
 
               <div>
-                <Label htmlFor="steering">Steering</Label>
+                <Label htmlFor="steering" className="text-slate-400">Steering</Label>
                 <Select
                   name="steering"
                   value={currentCar?.steering || "Left"}
@@ -932,7 +978,7 @@ const CarListing = () => {
                     handleInputChange({ target: { name: "steering", value } })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                     <SelectValue placeholder="Select steering" />
                   </SelectTrigger>
                   <SelectContent>
@@ -943,15 +989,15 @@ const CarListing = () => {
               </div>
 
               <div>
-                <Label htmlFor="transmission">Transmission</Label>
+                <Label htmlFor="transmission" className="text-slate-400">Transmission</Label>
                 <Select
                   name="transmission"
-                  value={currentCar?.transmission || ""}
+                  value={currentCar?.transmission || "Automatic"}
                   onValueChange={(value) =>
                     handleInputChange({ target: { name: "transmission", value } })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                     <SelectValue placeholder="Select transmission" />
                   </SelectTrigger>
                   <SelectContent>
@@ -964,15 +1010,15 @@ const CarListing = () => {
               </div>
 
               <div>
-                <Label htmlFor="fuel">Fuel Type</Label>
+                <Label htmlFor="fuel" className="text-slate-400">Fuel Type</Label>
                 <Select
                   name="fuel"
-                  value={currentCar?.fuel || ""}
+                  value={currentCar?.fuel || "Gasoline"}
                   onValueChange={(value) =>
                     handleInputChange({ target: { name: "fuel", value } })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                     <SelectValue placeholder="Select fuel type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -985,10 +1031,11 @@ const CarListing = () => {
               </div>
 
               <div>
-                <Label htmlFor="color">Color</Label>
+                <Label htmlFor="color" className="text-slate-400">Color</Label>
                 <Input
                   id="color"
                   name="color"
+                  required
                   value={currentCar?.color || ""}
                   onChange={handleInputChange}
                   className="bg-slate-800 border-slate-700 text-white"
@@ -996,7 +1043,7 @@ const CarListing = () => {
               </div>
 
               <div>
-                <Label htmlFor="year">Year</Label>
+                <Label htmlFor="year" className="text-slate-400">Year</Label>
                 <Input
                   id="year"
                   name="year"
@@ -1004,65 +1051,170 @@ const CarListing = () => {
                   required
                   min="1900"
                   max={new Date().getFullYear() + 1}
-                  value={currentCar?.year || new Date().getFullYear()}
+                  value={currentCar?.year || ""}
                   onChange={handleInputChange}
+                  className="bg-slate-800 border-slate-700 text-white"
                 />
               </div>
 
               <div>
-                <Label htmlFor="price">Price ($)</Label>
+                <Label htmlFor="price" className="text-slate-400">Price ($)</Label>
                 <Input
                   id="price"
                   name="price"
                   type="number"
                   required
                   min="0"
+                  placeholder="Enter price"
                   value={currentCar?.price || ""}
                   onChange={handleInputChange}
+                  className="bg-slate-800 border-slate-700 text-white"
                 />
               </div>
 
               <div>
-                <Label htmlFor="mileage">Mileage</Label>
+                <Label htmlFor="mileage" className="text-slate-400">Mileage</Label>
                 <Input
                   id="mileage"
                   name="mileage"
                   type="number"
                   required
                   min="0"
+                  placeholder="Enter mileage"
                   value={currentCar?.mileage || ""}
                   onChange={handleInputChange}
+                  className="bg-slate-800 border-slate-700 text-white"
                 />
               </div>
 
               <div>
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="driveTrain" className="text-slate-400">Drive Train</Label>
+                <Select
+                  name="driveTrain"
+                  value={currentCar?.driveTrain || "FWD"}
+                  onValueChange={(value) =>
+                    handleInputChange({ target: { name: "driveTrain", value } })
+                  }
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectValue placeholder="Select drive train" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FWD">FWD</SelectItem>
+                    <SelectItem value="RWD">RWD</SelectItem>
+                    <SelectItem value="AWD">AWD</SelectItem>
+                    <SelectItem value="4WD">4WD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="engineTransmission" className="text-slate-400">Engine Transmission</Label>
+                <Select
+                  name="engineTransmission"
+                  value={currentCar?.engineTransmission || "Automatic"}
+                  onValueChange={(value) =>
+                    handleInputChange({ target: { name: "engineTransmission", value } })
+                  }
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectValue placeholder="Select engine transmission" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Manual">Manual</SelectItem>
+                    <SelectItem value="Automatic">Automatic</SelectItem>
+                    <SelectItem value="CVT">CVT</SelectItem>
+                    <SelectItem value="DCT">DCT</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="engineHorsepower" className="text-slate-400">Engine Horsepower</Label>
+                <Input
+                  id="engineHorsepower"
+                  name="engineHorsepower"
+                  type="number"
+                  required
+                  min="0"
+                  value={currentCar?.engineHorsepower || "0"}
+                  onChange={handleInputChange}
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="engineCylinders" className="text-slate-400">Engine Cylinders</Label>
+                <Input
+                  id="engineCylinders"
+                  name="engineCylinders"
+                  type="number"
+                  required
+                  min="0"
+                  value={currentCar?.engineCylinders || "4"}
+                  onChange={handleInputChange}
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="engineSize" className="text-slate-400">Engine Size (L)</Label>
+                <Input
+                  id="engineSize"
+                  name="engineSize"
+                  type="number"
+                  required
+                  min="0"
+                  step="0.1"
+                  value={currentCar?.engineSize || "2.0"}
+                  onChange={handleInputChange}
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="status" className="text-slate-400">Status</Label>
                 <Select
                   name="status"
-                  value={currentCar?.status || "Active"}
+                  value={currentCar?.status || "available"}
                   onValueChange={(value) =>
                     handleInputChange({ target: { name: "status", value } })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Sold">Sold</SelectItem>
+                    <SelectItem value="available">Available</SelectItem>
+                    <SelectItem value="reserved">Reserved</SelectItem>
+                    <SelectItem value="sold">Sold</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="col-span-2">
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="description" className="text-slate-400">Description</Label>
+                <Input
+                  id="description"
+                  name="description"
+                  required
+                  placeholder="Enter car description"
+                  value={currentCar?.description || ""}
+                  onChange={handleInputChange}
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="location" className="text-slate-400">Location</Label>
                 <Input
                   id="location"
                   name="location"
                   required
+                  placeholder="Enter car location"
                   value={currentCar?.location || ""}
                   onChange={handleInputChange}
+                  className="bg-slate-800 border-slate-700 text-white"
                 />
               </div>
             </div>
@@ -1075,7 +1227,10 @@ const CarListing = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-500">
+              <Button 
+                type="submit" 
+                className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-6"
+              >
                 {isEditing ? "Save Changes" : "Add Car"}
               </Button>
             </DialogFooter>
@@ -1088,8 +1243,7 @@ const CarListing = () => {
           <DialogHeader>
             <DialogTitle className="text-white">Delete Car</DialogTitle>
             <DialogDescription className="text-slate-400">
-              Are you sure you want to delete {currentCar?.brand}{" "}
-              {currentCar?.model} ({currentCar?.year})? This action cannot be
+              Are you sure you want to delete {currentCar?.model} ({currentCar?.year})? This action cannot be
               undone.
             </DialogDescription>
           </DialogHeader>
