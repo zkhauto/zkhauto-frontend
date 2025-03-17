@@ -2,6 +2,39 @@ import Link from "next/link";
 import { Users, Car, Calendar, BarChart, Bot, Home } from "lucide-react";
 
 const Sidebar = () => {
+  const sidebarLinks = [
+    {
+      href: "/dashboard",
+      icon: <Home className="h-6 w-6" />,
+      text: "Dashboard"
+    },
+    {
+      href: "/dashboard/carlisting",
+      icon: <Car className="h-6 w-6" />,
+      text: "Car Listing"
+    },
+    {
+      href: "/dashboard/users",
+      icon: <Users className="h-6 w-6" />,
+      text: "Users"
+    },
+    {
+      href: "/dashboard/bookings",
+      icon: <Calendar className="h-6 w-6" />,
+      text: "Bookings"
+    },
+    {
+      href: "/dashboard/analytics",
+      icon: <BarChart className="h-6 w-6" />,
+      text: "Analytics"
+    },
+    {
+      href: "/dashboard/chatbotlogs",
+      icon: <Bot className="h-6 w-6" />,
+      text: "Chatbot Logs"
+    }
+  ];
+
   return (
     <aside className="w-64 bg-slate-900 shadow-xl h-screen fixed border-r border-slate-800">
       <div className="p-6">
@@ -11,60 +44,17 @@ const Sidebar = () => {
       </div>
       <nav className="mt-2 flex flex-col h-[calc(100vh-120px)] justify-between">
         <ul className="space-y-1 px-3">
-          <li>
-            <Link
-              href="/dashboard"
-              className="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800/50 text-slate-200 transition-colors duration-200"
-            >
-              <Users className="w-5 h-5 mr-3 text-slate-400" />
-              Dashboard
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/dashboard/carlisting"
-              className="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800/50 text-slate-200 transition-colors duration-200"
-            >
-              <Car className="w-5 h-5 mr-3 text-slate-400" />
-              Car Listing
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/dashboard/users"
-              className="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800/50 text-slate-200 transition-colors duration-200"
-            >
-              <Users className="w-5 h-5 mr-3 text-slate-400" />
-              Users
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/dashboard/bookings"
-              className="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800/50 text-slate-200 transition-colors duration-200"
-            >
-              <Calendar className="w-5 h-5 mr-3 text-slate-400" />
-              Bookings
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/dashboard/analytics"
-              className="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800/50 text-slate-200 transition-colors duration-200"
-            >
-              <BarChart className="w-5 h-5 mr-3 text-slate-400" />
-              Analytics
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/dashboard/chatbotlogs"
-              className="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800/50 text-slate-200 transition-colors duration-200"
-            >
-              <Bot className="w-5 h-5 mr-3 text-slate-400" />
-              Chatbot Logs
-            </Link>
-          </li>
+          {sidebarLinks.map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                className="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800/50 text-slate-200 transition-colors duration-200"
+              >
+                {link.icon}
+                <span className="ml-3">{link.text}</span>
+              </Link>
+            </li>
+          ))}
         </ul>
 
         <div className="px-3 mb-6">

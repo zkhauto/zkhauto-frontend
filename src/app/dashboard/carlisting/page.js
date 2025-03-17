@@ -42,6 +42,9 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import Sidebar from "../../ui/Sidebar";
 
+const TEMPLATE_IMAGE = "/template-car.svg"; // Update template image path
+const DEFAULT_IMAGE_ERROR_TEXT = "Car preview not available";
+
 const CarListing = () => {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,11 +60,37 @@ const CarListing = () => {
   });
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [currentCar, setCurrentCar] = useState(null);
+  const [currentCar, setCurrentCar] = useState({
+    brand: "",
+    model: "",
+    type: "Sedan",
+    steering: "Left",
+    transmission: "Automatic",
+    fuel: "Gasoline",
+    color: "Black",
+    year: new Date().getFullYear().toString(),
+    price: "",
+    mileage: "",
+    image: "",
+    location: "",
+    status: "available",
+    description: "",
+    driveTrain: "FWD",
+    engineTransmission: "Automatic",
+    engineHorsepower: 0,
+    engineCylinders: 4,
+    engineSize: 2.0,
+    rating: 0
+  });
   const [isEditing, setIsEditing] = useState(false);
 
   // Add filtered cars state
   const [filteredCars, setFilteredCars] = useState([]);
+
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const carsPerPage = 10; // Show 10 cars per page in admin view
 
   const fetchCars = async () => {
     try {
@@ -275,6 +304,22 @@ const CarListing = () => {
     setFilteredCars(filtered);
   }, [cars, search, filters]);
 
+  // Calculate pagination
+  const indexOfLastCar = currentPage * carsPerPage;
+  const indexOfFirstCar = indexOfLastCar - carsPerPage;
+  const currentCars = filteredCars.slice(indexOfFirstCar, indexOfLastCar);
+  const totalPages = Math.ceil(filteredCars.length / carsPerPage);
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredCars]);
+
   const handleSearch = (e) => {
     const value = e.target.value;
     console.log('Search submitted:', value);
@@ -394,7 +439,6 @@ const CarListing = () => {
   const uniqueStatuses = [...new Set(cars.filter(car => car?.status).map(car => car.status))];
 
   const openAddModal = () => {
-    const currentYear = new Date().getFullYear();
     setCurrentCar({
       brand: "",
       model: "",
@@ -403,7 +447,7 @@ const CarListing = () => {
       transmission: "Automatic",
       fuel: "Gasoline",
       color: "Black",
-      year: currentYear.toString(),
+      year: new Date().getFullYear().toString(),
       price: "",
       mileage: "",
       image: "",
@@ -463,23 +507,24 @@ const CarListing = () => {
     try {
       console.log("Current car data:", currentCar);
 
-      // Ensure all numeric fields are properly converted and set default image
+      // Ensure all numeric fields are properly converted and image is properly handled
       const carData = {
         ...currentCar,
-        image: currentCar.image?.trim() || "/placeholder.svg", // Default image if none provided
+        // Enhanced image URL handling
+        image: currentCar.image?.trim() ? getImageSrc(currentCar.image?.trim()) : TEMPLATE_IMAGE,
         brand: currentCar.brand.trim(),
-        price: Number(currentCar.price),
-        year: Number(currentCar.year),
-        mileage: Number(currentCar.mileage),
-        engineCylinders: Number(currentCar.engineCylinders),
-        engineHorsepower: Number(currentCar.engineHorsepower),
-        rating: Number(currentCar.rating)
+        price: Number(currentCar.price) || 0,
+        year: Number(currentCar.year) || new Date().getFullYear(),
+        mileage: Number(currentCar.mileage) || 0,
+        engineCylinders: Number(currentCar.engineCylinders) || 0,
+        engineHorsepower: Number(currentCar.engineHorsepower) || 0,
+        engineSize: Number(currentCar.engineSize) || 0,
+        rating: Number(currentCar.rating) || 0
       };
 
       console.log("Processed car data:", carData);
 
-      const isEditing = Boolean(currentCar._id);
-      const url = isEditing 
+      const url = isEditing && currentCar._id
         ? `http://localhost:5000/api/car/${currentCar._id}`
         : "http://localhost:5000/api/cars";
 
@@ -509,7 +554,29 @@ const CarListing = () => {
 
       await fetchCars();
       setIsAddEditModalOpen(false);
-      setCurrentCar(null);
+      // Reset the current car to initial state instead of null
+      setCurrentCar({
+        brand: "",
+        model: "",
+        type: "Sedan",
+        steering: "Left",
+        transmission: "Automatic",
+        fuel: "Gasoline",
+        color: "Black",
+        year: new Date().getFullYear().toString(),
+        price: "",
+        mileage: "",
+        image: "",
+        location: "",
+        status: "available",
+        description: "",
+        driveTrain: "FWD",
+        engineTransmission: "Automatic",
+        engineHorsepower: 0,
+        engineCylinders: 4,
+        engineSize: 2.0,
+        rating: 0
+      });
       setError(null);
       
       toast.success(isEditing ? "Car has been successfully updated" : "New car has been added");
@@ -544,10 +611,10 @@ const CarListing = () => {
     
     setCurrentCar(prev => ({
       ...prev,
-      [name]:
+        [name]:
         name === "price" || name === "mileage"
           ? value === "" ? "" : Number(value)
-          : value,
+            : value,
     }));
   };
 
@@ -559,10 +626,119 @@ const CarListing = () => {
     }).format(price);
   };
 
-  // Add a function to handle image errors
-  const handleImageError = (e) => {
-    e.target.src = "/placeholder.svg"; // Fallback to placeholder image
-    e.target.onerror = null; // Prevent infinite loop if placeholder also fails
+  // Enhanced image handling function with state management
+  const ImageWithFallback = ({ src, alt, ...props }) => {
+    // If no image source or it's the template, don't render the image component
+    if (!src || src === TEMPLATE_IMAGE) {
+      return (
+        <div className="h-full w-full flex items-center justify-center bg-slate-800 text-slate-400 text-sm">
+          <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          No Image
+        </div>
+      );
+    }
+
+    const [imgSrc, setImgSrc] = useState(src);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+      setImgSrc(src);
+      setError(false);
+    }, [src]);
+
+    const handleError = () => {
+      if (!error) {
+        console.error('Image load error:', imgSrc);
+        setError(true);
+        setImgSrc(null);
+      }
+    };
+
+    if (!imgSrc || error) {
+      return (
+        <div className="h-full w-full flex items-center justify-center bg-slate-800 text-slate-400 text-sm">
+          <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          No Image
+        </div>
+      );
+    }
+
+    return (
+      <Image
+        {...props}
+        src={imgSrc}
+        alt={alt}
+        onError={handleError}
+        unoptimized={!imgSrc.startsWith('/')}
+      />
+    );
+  };
+
+  // Enhanced image source getter with better validation
+  const getImageSrc = (imageUrl, carInfo = '') => {
+    // Return null for any invalid or missing image URL
+    if (!imageUrl || 
+        imageUrl.trim() === "" || 
+        imageUrl === "/placeholder.svg" || 
+        imageUrl.includes('undefined') ||
+        imageUrl === "null") {
+      console.log(`No image available for ${carInfo}`);
+      return null;
+    }
+
+    // Handle relative and absolute URLs
+    if (imageUrl.startsWith('/')) {
+      return imageUrl;
+    }
+
+    // Validate URL format
+    try {
+      new URL(imageUrl);
+      return imageUrl;
+    } catch {
+      console.log(`Invalid URL format for ${carInfo}`);
+      return null;
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setUploadingImage(true);
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to upload image");
+      }
+
+      // Update the car state with the new image URL
+      setCurrentCar(prev => ({
+        ...prev,
+        image: data.imageUrl
+      }));
+
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error(error.message || "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   return (
@@ -684,14 +860,14 @@ const CarListing = () => {
                   >
                     Clear Filters
                   </Button>
-                </div>
+            </div>
             <Button
               onClick={openAddModal}
                   className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2"
-                >
-                  <Plus className="mr-2 h-4 w-4" /> Add New Car
-                </Button>
-              </div>
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add New Car
+            </Button>
+          </div>
 
               {/* Results Count */}
               <div className="flex justify-between items-center mb-6">
@@ -700,192 +876,191 @@ const CarListing = () => {
                 </div>
               </div>
 
-              <div className="bg-slate-900/50 border-slate-800 rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-slate-800">
-                      <TableHead className="text-slate-400">Car</TableHead>
-                      <TableHead className="text-slate-400">Details</TableHead>
-                      <TableHead className="text-slate-400">Price</TableHead>
-                      <TableHead className="text-slate-400">Status</TableHead>
-                      <TableHead className="text-slate-400">Location</TableHead>
-                      <TableHead className="text-slate-400 text-right">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                        {filteredCars.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center text-slate-400 py-8">
-                              No cars found matching your filters
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredCars.map((car) => (
-                            <TableRow key={car._id} className="border-slate-800">
+          <div className="mt-6 bg-gray-900 rounded-lg border border-gray-800">
+            <div className="overflow-x-auto">
+              <table className="w-full text-white">
+                <TableHeader>
+                  <TableRow className="border-slate-800">
+                    <TableHead className="text-slate-400">Car</TableHead>
+                    <TableHead className="text-slate-400">Details</TableHead>
+                    <TableHead className="text-slate-400">Price</TableHead>
+                    <TableHead className="text-slate-400">Status</TableHead>
+                    <TableHead className="text-slate-400">Location</TableHead>
+                    <TableHead className="text-slate-400 text-right">
+                      Actions
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                          {currentCars.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={6} className="text-center text-slate-400 py-8">
+                                No cars found matching your filters
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            currentCars.map((car) => (
+                              <TableRow key={car._id} className="border-slate-800">
                         <TableCell>
                           <div className="flex items-center">
-                            <div className="h-10 w-16 flex-shrink-0 mr-4">
-                              <Image
-                                className="h-10 w-16 rounded object-cover bg-slate-800"
-                                src={car.image || "/placeholder.svg"}
-                                alt={`${car.brand} ${car.model}`}
-                                width={64}
-                                height={40}
-                                onError={(e) => {
-                                  e.target.src = "/placeholder.svg";
-                                  e.target.onerror = null;
-                                }}
-                                priority={false}
-                                loading="lazy"
-                                quality={75}
-                                sizes="64px"
-                                fetchPriority="auto"
-                              />
+                                <div className="h-10 w-16 flex-shrink-0 mr-4 bg-slate-800 rounded">
+                                  <div className="h-10 w-16 flex items-center justify-center text-slate-400">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  </div>
                             </div>
                             <div>
-                                    <div className="font-medium text-white text-lg">
-                                      {car.brand.charAt(0).toUpperCase() + car.brand.slice(1)} {car.model}
-                            </div>
-                                    <div className="text-base text-blue-400 font-semibold">
-                                      Year: {car.year}
-                            </div>
+                                      <div className="font-medium text-white text-lg">
+                                        {car.brand.charAt(0).toUpperCase() + car.brand.slice(1)} {car.model}
+                          </div>
+                                      <div className="text-base text-blue-400 font-semibold">
+                                        Year: {car.year}
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                               <div className="text-white font-medium mb-1">
                                 {car.type} • {car.year}
                               </div>
-                            <div className="text-sm text-slate-400">
-                                    {car.steering} Hand • {car.mileage?.toLocaleString() || 0} mi
-                                  </div>
-                                  <div className="text-sm text-slate-400">
-                                    Transmission: {car.transmission || 'N/A'}
-                                  </div>
-                                  <div className="text-sm text-slate-400">
-                                    Fuel Type: {car.fuel || 'N/A'}
-                                  </div>
-                                  <div className="text-sm text-slate-400">
-                                    Color: {car.color || 'N/A'}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-white">
-                            {formatPrice(car.price)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
+                        <div className="text-sm text-slate-400">
+                                      {car.steering} Hand • {car.mileage?.toLocaleString() || 0} mi
+                                    </div>
+                                    <div className="text-sm text-slate-400">
+                                      Transmission: {car.transmission || 'N/A'}
+                                    </div>
+                                    <div className="text-sm text-slate-400">
+                                      Fuel Type: {car.fuel || 'N/A'}
+                                    </div>
+                                    <div className="text-sm text-slate-400">
+                                      Color: {car.color || 'N/A'}
+                        </div>
+                      </TableCell>
+                    <TableCell>
+                      <div className="font-medium text-white">
+                        {formatPrice(car.price)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
                                     car.status === "available"
-                                ? "default"
+                            ? "default"
                                       : car.status === "reserved"
-                                ? "secondary"
-                                : "outline"
-                            }
-                            className={
+                            ? "secondary"
+                            : "outline"
+                        }
+                        className={
                                     car.status === "available"
-                                ? "bg-emerald-500/10 text-emerald-500"
+                            ? "bg-emerald-500/10 text-emerald-500"
                                       : car.status === "reserved"
-                                ? "bg-yellow-500/10 text-yellow-500"
-                                : "bg-slate-800 text-slate-400"
-                            }
-                          >
-                            {car.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm text-slate-400">
-                            {car.location}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditModal(car)}
-                            className="text-slate-400 hover:text-white hover:bg-slate-800"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openDeleteModal(car)}
-                            className="text-slate-400 hover:text-red-500 hover:bg-red-500/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                            ? "bg-yellow-500/10 text-yellow-500"
+                            : "bg-slate-800 text-slate-400"
+                        }
+                      >
+                        {car.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm text-slate-400">
+                        {car.location}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditModal(car)}
+                        className="text-slate-400 hover:text-white hover:bg-slate-800"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openDeleteModal(car)}
+                        className="text-slate-400 hover:text-red-500 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                           ))
                         )}
-                  </TableBody>
-                </Table>
+                </TableBody>
+              </table>
+            </div>
 
-                <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800">
-                  <div className="flex-1 flex justify-between sm:hidden">
+            {/* Pagination Controls */}
+            {filteredCars.length > 0 && (
+              <div className="p-4 border-t border-gray-800">
+                <div className="flex justify-between items-center">
+                  {/* Results Counter */}
+                  <div className="text-gray-400">
+                    Showing {indexOfFirstCar + 1}-{Math.min(indexOfLastCar, filteredCars.length)} of {filteredCars.length} cars
+                  </div>
+
+                  <div className="flex items-center space-x-2">
                     <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-slate-800 text-slate-400 hover:bg-slate-800"
+                      onClick={() => paginate(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="bg-gray-800 hover:bg-gray-700 text-white disabled:opacity-50"
                     >
                       Previous
                     </Button>
+                    
+                    <div className="flex space-x-2">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter(num => {
+                          // Show first page, last page, current page, and one page before and after current
+                          return num === 1 || 
+                                 num === totalPages || 
+                                 num === currentPage || 
+                                 num === currentPage - 1 || 
+                                 num === currentPage + 1;
+                        })
+                        .map((number) => {
+                          // If there's a gap, show ellipsis
+                          if (number > 1 && number < totalPages && 
+                              ![currentPage - 1, currentPage, currentPage + 1].includes(number)) {
+                            return <span key={`ellipsis-${number}`} className="text-gray-400">...</span>;
+                          }
+                          return (
+                            <Button
+                              key={number}
+                              onClick={() => paginate(number)}
+                              className={`px-4 py-2 ${
+                                currentPage === number
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-gray-800 hover:bg-gray-700 text-white'
+                              }`}
+                            >
+                              {number}
+                            </Button>
+                          );
+                        })}
+                    </div>
+
                     <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-slate-800 text-slate-400 hover:bg-slate-800"
+                      onClick={() => paginate(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="bg-gray-800 hover:bg-gray-700 text-white disabled:opacity-50"
                     >
                       Next
                     </Button>
                   </div>
-                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm text-slate-400">
-                        Showing <span className="font-medium text-white">1</span> to{" "}
-                        <span className="font-medium text-white">
-                          {filteredCars.length}
-                        </span>{" "}
-                        of{" "}
-                        <span className="font-medium text-white">
-                          {filteredCars.length}
-                        </span>{" "}
-                        results
-                      </p>
-                    </div>
-                    <div>
-                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-slate-800 text-slate-400 hover:bg-slate-800"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                          <span className="sr-only">Previous</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-slate-800 text-white bg-slate-800"
-                        >
-                          1
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-slate-800 text-slate-400 hover:bg-slate-800"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                          <span className="sr-only">Next</span>
-                        </Button>
-                      </nav>
-                    </div>
-                  </div>
                 </div>
               </div>
+            )}
+
+            {/* No Results Message */}
+            {filteredCars.length === 0 && (
+              <div className="p-4 text-center text-gray-400">
+                No cars found matching your criteria.
+              </div>
+            )}
+          </div>
             </>
           )}
         </div>
@@ -902,284 +1077,163 @@ const CarListing = () => {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddEdit}>
-            {error && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-500">
-                {error}
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label htmlFor="image" className="text-slate-400">
-                  Image URL
+            <div className="grid gap-4 py-4">
+              {/* Image URL input */}
+              <div className="grid gap-2">
+                <Label htmlFor="image" className="text-white">
+                  Car Image
                 </Label>
+                <div className="flex gap-4 items-start">
+                  <div className="flex-1">
+                    <div className="relative">
                 <Input
                   id="image"
                   name="image"
-                  value={currentCar?.image || ""}
-                  onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                        className="bg-slate-800 border-slate-700 text-white cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-slate-700 file:text-white hover:file:bg-slate-600"
+                      />
+                      {uploadingImage && (
+                        <div className="absolute inset-0 bg-slate-800/50 flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-400 mt-2">
+                      {uploadingImage ? "Uploading image..." : "Supported formats: JPG, PNG, GIF, WebP (max 5MB)"}
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="brand" className="text-slate-400">Brand</Label>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Brand input */}
+                <div className="grid gap-2">
+                  <Label htmlFor="brand" className="text-white">
+                    Brand
+                  </Label>
                 <Input
-                  id="brand"
-                  name="brand"
-                  required
-                  value={currentCar?.brand || ""}
+                    id="brand"
+                    name="brand"
+                    type="text"
+                    placeholder="Enter brand"
+                    value={currentCar.brand || ""}
                   onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
-                  placeholder="Enter car brand name"
+                    className="bg-slate-800 border-slate-700 text-white"
                 />
-                <p className="text-sm text-slate-500 mt-1">Enter the brand name </p>
               </div>
 
-              <div>
-                <Label htmlFor="model" className="text-slate-400">Model</Label>
+                {/* Model input */}
+                <div className="grid gap-2">
+                  <Label htmlFor="model" className="text-white">
+                    Model
+                  </Label>
                 <Input
                   id="model"
                   name="model"
-                  required
-                  value={currentCar?.model || ""}
+                    type="text"
+                    placeholder="Enter model"
+                    value={currentCar.model || ""}
                   onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-slate-800 border-slate-700 text-white"
                 />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="type" className="text-slate-400">Type</Label>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Type input */}
+                <div className="grid gap-2">
+                  <Label htmlFor="type" className="text-white">
+                    Type
+                  </Label>
                 <Select
+                    id="type"
                   name="type"
-                  value={currentCar?.type || "Sedan"}
-                  onValueChange={(value) =>
-                    handleInputChange({ target: { name: "type", value } })
-                  }
-                >
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    value={currentCar.type || "Sedan"}
+                    onValueChange={(value) => handleInputChange({ target: { name: "type", value } })}
+                  >
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Sedan">Sedan</SelectItem>
                     <SelectItem value="SUV">SUV</SelectItem>
                     <SelectItem value="Coupe">Coupe</SelectItem>
-                    <SelectItem value="Truck">Truck</SelectItem>
                     <SelectItem value="Hatchback">Hatchback</SelectItem>
+                      <SelectItem value="Wagon">Wagon</SelectItem>
+                      <SelectItem value="Van">Van</SelectItem>
+                      <SelectItem value="Truck">Truck</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div>
-                <Label htmlFor="steering" className="text-slate-400">Steering</Label>
-                <Select
-                  name="steering"
-                  value={currentCar?.steering || "Left"}
-                  onValueChange={(value) =>
-                    handleInputChange({ target: { name: "steering", value } })
-                  }
-                >
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                    <SelectValue placeholder="Select steering" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Left">Left</SelectItem>
-                    <SelectItem value="Right">Right</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="transmission" className="text-slate-400">Transmission</Label>
-                <Select
-                  name="transmission"
-                  value={currentCar?.transmission || "Automatic"}
-                  onValueChange={(value) =>
-                    handleInputChange({ target: { name: "transmission", value } })
-                  }
-                >
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                    <SelectValue placeholder="Select transmission" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Manual">Manual</SelectItem>
-                    <SelectItem value="Automatic">Automatic</SelectItem>
-                    <SelectItem value="DCT">DCT</SelectItem>
-                    <SelectItem value="CVT">CVT</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="fuel" className="text-slate-400">Fuel Type</Label>
-                <Select
-                  name="fuel"
-                  value={currentCar?.fuel || "Gasoline"}
-                  onValueChange={(value) =>
-                    handleInputChange({ target: { name: "fuel", value } })
-                  }
-                >
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                    <SelectValue placeholder="Select fuel type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Gasoline">Gasoline</SelectItem>
-                    <SelectItem value="Diesel">Diesel</SelectItem>
-                    <SelectItem value="Electric">Electric</SelectItem>
-                    <SelectItem value="Hybrid">Hybrid</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="color" className="text-slate-400">Color</Label>
-                <Input
-                  id="color"
-                  name="color"
-                  required
-                  value={currentCar?.color || ""}
-                  onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="year" className="text-slate-400">Year</Label>
+                {/* Year input */}
+                <div className="grid gap-2">
+                  <Label htmlFor="year" className="text-white">
+                    Year
+                  </Label>
                 <Input
                   id="year"
                   name="year"
                   type="number"
-                  required
+                    placeholder="Enter year"
+                    value={currentCar.year || ""}
+                    onChange={handleInputChange}
+                    className="bg-slate-800 border-slate-700 text-white"
                   min="1900"
                   max={new Date().getFullYear() + 1}
-                  value={currentCar?.year || ""}
-                  onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
                 />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="price" className="text-slate-400">Price ($)</Label>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Price input */}
+                <div className="grid gap-2">
+                  <Label htmlFor="price" className="text-white">
+                    Price
+                  </Label>
                 <Input
                   id="price"
                   name="price"
                   type="number"
-                  required
-                  min="0"
-                  placeholder="Enter price"
-                  value={currentCar?.price || ""}
+                    placeholder="Enter price"
+                    value={currentCar.price || ""}
                   onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-slate-800 border-slate-700 text-white"
+                    min="0"
                 />
               </div>
 
-              <div>
-                <Label htmlFor="mileage" className="text-slate-400">Mileage</Label>
+                {/* Mileage input */}
+                <div className="grid gap-2">
+                  <Label htmlFor="mileage" className="text-white">
+                    Mileage
+                  </Label>
                 <Input
                   id="mileage"
                   name="mileage"
                   type="number"
-                  required
-                  min="0"
-                  placeholder="Enter mileage"
-                  value={currentCar?.mileage || ""}
+                    placeholder="Enter mileage"
+                    value={currentCar.mileage || ""}
                   onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-slate-800 border-slate-700 text-white"
+                    min="0"
                 />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="driveTrain" className="text-slate-400">Drive Train</Label>
+              {/* Status input */}
+              <div className="grid gap-2">
+                <Label htmlFor="status" className="text-white">
+                  Status
+                </Label>
                 <Select
-                  name="driveTrain"
-                  value={currentCar?.driveTrain || "FWD"}
-                  onValueChange={(value) =>
-                    handleInputChange({ target: { name: "driveTrain", value } })
-                  }
-                >
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                    <SelectValue placeholder="Select drive train" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="FWD">FWD</SelectItem>
-                    <SelectItem value="RWD">RWD</SelectItem>
-                    <SelectItem value="AWD">AWD</SelectItem>
-                    <SelectItem value="4WD">4WD</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="engineTransmission" className="text-slate-400">Engine Transmission</Label>
-                <Select
-                  name="engineTransmission"
-                  value={currentCar?.engineTransmission || "Automatic"}
-                  onValueChange={(value) =>
-                    handleInputChange({ target: { name: "engineTransmission", value } })
-                  }
-                >
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                    <SelectValue placeholder="Select engine transmission" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Manual">Manual</SelectItem>
-                    <SelectItem value="Automatic">Automatic</SelectItem>
-                    <SelectItem value="CVT">CVT</SelectItem>
-                    <SelectItem value="DCT">DCT</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="engineHorsepower" className="text-slate-400">Engine Horsepower</Label>
-                <Input
-                  id="engineHorsepower"
-                  name="engineHorsepower"
-                  type="number"
-                  required
-                  min="0"
-                  value={currentCar?.engineHorsepower || "0"}
-                  onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="engineCylinders" className="text-slate-400">Engine Cylinders</Label>
-                <Input
-                  id="engineCylinders"
-                  name="engineCylinders"
-                  type="number"
-                  required
-                  min="0"
-                  value={currentCar?.engineCylinders || "4"}
-                  onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="engineSize" className="text-slate-400">Engine Size (L)</Label>
-                <Input
-                  id="engineSize"
-                  name="engineSize"
-                  type="number"
-                  required
-                  min="0"
-                  step="0.1"
-                  value={currentCar?.engineSize || "2.0"}
-                  onChange={handleInputChange}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="status" className="text-slate-400">Status</Label>
-                <Select
+                  id="status"
                   name="status"
-                  value={currentCar?.status || "available"}
-                  onValueChange={(value) =>
-                    handleInputChange({ target: { name: "status", value } })
-                  }
+                  value={currentCar.status || "available"}
+                  onValueChange={(value) => handleInputChange({ target: { name: "status", value } })}
                 >
                   <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                     <SelectValue placeholder="Select status" />
@@ -1192,44 +1246,129 @@ const CarListing = () => {
                 </Select>
               </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="description" className="text-slate-400">Description</Label>
+              {/* Transmission input */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="transmission" className="text-white">
+                    Transmission
+                  </Label>
+                  <Select
+                    id="transmission"
+                    name="transmission"
+                    value={currentCar.transmission || "Automatic"}
+                    onValueChange={(value) => handleInputChange({ target: { name: "transmission", value } })}
+                  >
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="Select transmission" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Automatic">Automatic</SelectItem>
+                      <SelectItem value="Manual">Manual</SelectItem>
+                      <SelectItem value="CVT">CVT</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Fuel Type input */}
+                <div className="grid gap-2">
+                  <Label htmlFor="fuel" className="text-white">
+                    Fuel Type
+                  </Label>
+                  <Select
+                    id="fuel"
+                    name="fuel"
+                    value={currentCar.fuel || "Petrol"}
+                    onValueChange={(value) => handleInputChange({ target: { name: "fuel", value } })}
+                  >
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="Select fuel type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Petrol">Petrol</SelectItem>
+                      <SelectItem value="Diesel">Diesel</SelectItem>
+                      <SelectItem value="Electric">Electric</SelectItem>
+                      <SelectItem value="Hybrid">Hybrid</SelectItem>
+                      <SelectItem value="Plug-in Hybrid">Plug-in Hybrid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Color and Steering input */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="color" className="text-white">
+                    Color
+                  </Label>
+                  <Input
+                    id="color"
+                    name="color"
+                    type="text"
+                    placeholder="Enter color"
+                    value={currentCar.color || ""}
+                    onChange={handleInputChange}
+                    className="bg-slate-800 border-slate-700 text-white"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="steering" className="text-white">
+                    Steering
+                  </Label>
+                  <Select
+                    id="steering"
+                    name="steering"
+                    value={currentCar.steering || "Left"}
+                    onValueChange={(value) => handleInputChange({ target: { name: "steering", value } })}
+                  >
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="Select steering" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Left">Left Hand Drive</SelectItem>
+                      <SelectItem value="Right">Right Hand Drive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Description input */}
+              <div className="grid gap-2">
+                <Label htmlFor="description" className="text-white">
+                  Description
+                </Label>
                 <Input
                   id="description"
                   name="description"
-                  required
-                  placeholder="Enter car description"
-                  value={currentCar?.description || ""}
+                  type="text"
+                  placeholder="Enter description"
+                  value={currentCar.description || ""}
                   onChange={handleInputChange}
                   className="bg-slate-800 border-slate-700 text-white"
                 />
               </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="location" className="text-slate-400">Location</Label>
+              {/* Location input */}
+              <div className="grid gap-2">
+                <Label htmlFor="location" className="text-white">
+                  Location
+                </Label>
                 <Input
                   id="location"
                   name="location"
-                  required
-                  placeholder="Enter car location"
-                  value={currentCar?.location || ""}
+                  type="text"
+                  placeholder="Enter location"
+                  value={currentCar.location || ""}
                   onChange={handleInputChange}
                   className="bg-slate-800 border-slate-700 text-white"
                 />
               </div>
             </div>
-            <DialogFooter className="mt-6">
+
+            <DialogFooter>
               <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsAddEditModalOpen(false)}
-                className="border-slate-700 text-slate-400 hover:bg-slate-800"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-6"
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-500 text-white"
               >
                 {isEditing ? "Save Changes" : "Add Car"}
               </Button>

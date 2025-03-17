@@ -14,6 +14,7 @@ import {
   Linkedin,
   Instagram,
 } from "lucide-react";
+import { useRouter } from 'next/navigation';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,7 @@ import Image from "next/image";
 import Navbar from "../ui/Navbar";
 
 const ContactUs = () => {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState("");
@@ -57,6 +59,15 @@ const ContactUs = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b bg-gray-900">
       <Navbar />
+      {/* Back Button */}
+      <div className="container mx-auto px-4 py-4">
+        <Button 
+          onClick={() => router.back()}
+          className="bg-gray-800 hover:bg-gray-700 text-white"
+        >
+          ← Back
+        </Button>
+      </div>
       {/* Header Section */}
       <div className="relative bg-gray-900 py-16 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 overflow-hidden">

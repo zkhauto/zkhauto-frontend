@@ -21,7 +21,8 @@ const Navbar = () => {
     const publicLinks = [
       { href: "/", label: "Home" },
       { href: "/carlisting", label: "Car Listings" },
-      { href: "/contact", label: "Contact Us" },
+      { href: "/about", label: "About" },
+      { href: "/contact", label: "Contact" }
     ];
 
     // Additional links for logged-in users
