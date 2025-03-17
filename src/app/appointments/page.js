@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { toast, Toaster } from "react-hot-toast";
+
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../ui/Navbar";
 
@@ -80,7 +82,7 @@ const TestDriveBooking = () => {
         const newTestDrive = await response.json();
 
         setTestDrives((prev) => [...prev, newTestDrive]);
-        alert("Test drive booked successfully!");
+        toast.success("Test drive booked successfully");
         setFormData({
           name: user?.firstName + " " + user?.lastName,
           email: user?.email,
@@ -92,6 +94,12 @@ const TestDriveBooking = () => {
         });
         setDate(undefined);
         setTime("");
+      } else if (response.status === 400) {
+        toast.error(
+          `This carModel is already booked for the selected date and time`
+        );
+      } else {
+        alert("Error booking test drive");
       }
     } catch (error) {
       console.error("Error booking test drive:", error);
@@ -111,6 +119,7 @@ const TestDriveBooking = () => {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
+      <Toaster position="top-right" />
       <Navbar />
       <div className="container mx-auto py-8 px-4 bg-gray-900 text-white min-h-screen mt-12">
         <div className="flex flex-col items-center mb-8">
