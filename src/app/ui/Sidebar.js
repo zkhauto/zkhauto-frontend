@@ -1,38 +1,43 @@
+import { BarChart, Bot, Calendar, Car, Home, Users } from "lucide-react";
 import Link from "next/link";
-import { Users, Car, Calendar, BarChart, Bot, Home } from "lucide-react";
 
 const Sidebar = () => {
   const sidebarLinks = [
     {
       href: "/dashboard",
       icon: <Home className="h-6 w-6" />,
-      text: "Dashboard"
+      text: "Dashboard",
     },
     {
       href: "/dashboard/carlisting",
       icon: <Car className="h-6 w-6" />,
-      text: "Car Listing"
+      text: "Car Listing",
     },
     {
       href: "/dashboard/users",
       icon: <Users className="h-6 w-6" />,
-      text: "Users"
+      text: "Users",
     },
     {
       href: "/dashboard/bookings",
       icon: <Calendar className="h-6 w-6" />,
-      text: "Bookings"
+      text: "Bookings",
     },
     {
       href: "/dashboard/analytics",
       icon: <BarChart className="h-6 w-6" />,
-      text: "Analytics"
+      text: "Analytics",
+    },
+    {
+      href: "/dashboard/messages",
+      icon: <Bot className="h-6 w-6" />,
+      text: "Users Messages",
     },
     {
       href: "/dashboard/chatbotlogs",
       icon: <Bot className="h-6 w-6" />,
-      text: "Chatbot Logs"
-    }
+      text: "Chatbot Logs",
+    },
   ];
 
   return (

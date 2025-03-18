@@ -1,21 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import {
-  MapPin,
-  Clock,
-  Phone,
-  Mail,
-  MessageSquare,
   AlertCircle,
+  Clock,
   Facebook,
-  Twitter,
-  Linkedin,
   Instagram,
+  Linkedin,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Phone,
+  Twitter,
 } from "lucide-react";
-import { useRouter } from 'next/navigation';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,26 +35,57 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import Image from "next/image";
+import { useAuth } from "../context/AuthContext";
 import Navbar from "../ui/Navbar";
 
 const ContactUs = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError("");
 
-    setTimeout(() => {
+    const formData = new FormData(e.target);
+    const data = {
+      fullName: user?.firstName + " " + user?.lastName,
+      email: user?.email,
+      phone: formData.get("phone"),
+      carModel: formData.get("carModel"),
+      preferredDate: formData.get("preferredDate"),
+      topic: selectedTopic,
+      message: formData.get("message"),
+    };
+
+    try {
+      const response = await fetch("http://localhost:5000/api/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        setIsSubmitted(true);
+        e.target.reset();
+        setSelectedTopic("");
+      } else {
+        const errorData = await response.json();
+        setError(
+          errorData.message || "Failed to send message. Please try again."
+        );
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      setIsSubmitted(true);
-      e.target.reset();
-      setSelectedTopic("");
-    }, 1500);
+    }
   };
 
   return (
@@ -61,7 +93,7 @@ const ContactUs = () => {
       <Navbar />
       {/* Back Button */}
       <div className="container mx-auto px-4 py-4">
-        <Button 
+        <Button
           onClick={() => router.back()}
           className="bg-gray-800 hover:bg-gray-700 text-white"
         >
@@ -72,8 +104,8 @@ const ContactUs = () => {
       <div className="relative bg-gray-900 py-16 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 overflow-hidden">
           {/* <img
-            src="/placeholder.svg?height=400&width=1920&text=Medical+Background"
-            alt="Medical background"
+            src="/placeholder.svg?height=400&width=1920&text=Car+Background"
+            alt="Car background"
             className="h-full w-full object-cover opacity-10"
           /> */}
         </div>
@@ -82,7 +114,7 @@ const ContactUs = () => {
             Contact Us
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-xl text-teal-50">
-            We&apos;re here to help with your healthcare needs. Our team is
+            We&apos;re here to help with your car-buying needs. Our team is
             ready to assist you with any questions or concerns.
           </p>
         </div>
@@ -131,9 +163,9 @@ const ContactUs = () => {
               </div>
               <CardContent className="p-6">
                 <p className="mb-4 text-gray-700">
-                  123 Healthcare Avenue
+                  123 Car Avenue
                   <br />
-                  Medical District
+                  Automotive District
                   <br />
                   New York, NY 10001
                 </p>
@@ -164,9 +196,9 @@ const ContactUs = () => {
                 Emergency Information
               </AlertTitle>
               <AlertDescription className="mt-2 text-red-700">
-                For medical emergencies, please call{" "}
-                <span className="font-bold">911</span> or go to your nearest
-                emergency room immediately.
+                For car emergencies, please call{" "}
+                <span className="font-bold">911</span> or contact your nearest
+                car service center immediately.
               </AlertDescription>
             </Alert>
           </div>
@@ -225,6 +257,7 @@ const ContactUs = () => {
                     className="space-y-6"
                   >
                     <div className="grid gap-6 sm:grid-cols-2">
+                      {/* {JSON.stringify(user)} */}
                       <div className="space-y-2">
                         <Label
                           htmlFor="fullName"
@@ -234,8 +267,9 @@ const ContactUs = () => {
                         </Label>
                         <Input
                           id="fullName"
-                          placeholder="John Doe"
-                          required
+                          name="fullName"
+                          value={`${user?.firstName} ${user?.lastName}`}
+                          readOnly
                           className="border-gray-200 focus-visible:ring-gray-500"
                         />
                       </div>
@@ -245,8 +279,11 @@ const ContactUs = () => {
                         </Label>
                         <Input
                           id="email"
+                          name="email"
                           type="email"
                           placeholder="john@example.com"
+                          value={user?.email}
+                          readOnly
                           required
                           className="border-gray-200 focus-visible:ring-gray-500"
                         />
@@ -260,6 +297,7 @@ const ContactUs = () => {
                         </Label>
                         <Input
                           id="phone"
+                          name="phone"
                           type="tel"
                           placeholder="(212) 555-1234"
                           className="border-gray-200 focus-visible:ring-gray-500"
@@ -267,17 +305,33 @@ const ContactUs = () => {
                       </div>
                       <div className="space-y-2">
                         <Label
-                          htmlFor="patientId"
+                          htmlFor="carModel"
                           className="text-sm font-medium"
                         >
-                          Patient ID (if applicable)
+                          Car Model
                         </Label>
                         <Input
-                          id="patientId"
-                          placeholder="e.g. PAT-12345"
+                          id="carModel"
+                          name="carModel"
+                          placeholder="e.g. Volvo XC60"
                           className="border-gray-200 focus-visible:ring-gray-500"
                         />
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="preferredDate"
+                        className="text-sm font-medium"
+                      >
+                        Preferred Date
+                      </Label>
+                      <Input
+                        id="preferredDate"
+                        name="preferredDate"
+                        type="date"
+                        className="border-gray-200 focus-visible:ring-gray-500"
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -298,14 +352,11 @@ const ContactUs = () => {
                           <SelectItem value="general">
                             General Inquiry
                           </SelectItem>
-                          <SelectItem value="appointment">
-                            Appointment Related
+                          <SelectItem value="testDrive">
+                            Test Drive Request
                           </SelectItem>
-                          <SelectItem value="technical">
-                            Technical Support
-                          </SelectItem>
-                          <SelectItem value="billing">
-                            Billing Question
+                          <SelectItem value="pricing">
+                            Pricing Inquiry
                           </SelectItem>
                           <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
@@ -318,6 +369,7 @@ const ContactUs = () => {
                       </Label>
                       <Textarea
                         id="message"
+                        name="message"
                         placeholder="Please describe your inquiry in detail..."
                         className="min-h-[150px] border-gray-200 focus-visible:ring-gray-500"
                         required
@@ -328,6 +380,7 @@ const ContactUs = () => {
                       <input
                         type="checkbox"
                         id="consent"
+                        name="consent"
                         className="mt-1 h-4 w-4 rounded border-gray-300 text-gray-600 focus:ring-gray-500"
                         required
                       />
@@ -346,6 +399,14 @@ const ContactUs = () => {
                         to learn more about how we use data.
                       </Label>
                     </div>
+
+                    {error && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
 
                     <Button
                       type="submit"
@@ -425,10 +486,10 @@ const ContactUs = () => {
                   General Inquiries
                 </div>
                 <a
-                  href="mailto:info@medicalclinic.com"
+                  href="mailto:info@carselling.com"
                   className="text-lg font-medium text-gray-600 hover:underline"
                 >
-                  info@medicalclinic.com
+                  info@carselling.com
                 </a>
               </div>
             </div>
