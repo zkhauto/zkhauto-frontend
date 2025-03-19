@@ -15,6 +15,7 @@ import { toast, Toaster } from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import {
   Table,
   TableBody,
@@ -50,6 +51,8 @@ const CarListing = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [priceRange, setPriceRange] = useState([0, 1000000]);
+  const [yearRange, setYearRange] = useState([1990, new Date().getFullYear()]);
   const [filters, setFilters] = useState({
     minPrice: "",
     maxPrice: "",
@@ -92,33 +95,53 @@ const CarListing = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const carsPerPage = 10; // Show 10 cars per page in admin view
 
+  // Add new state for selected cars
+  const [selectedCars, setSelectedCars] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [isMultiDeleteModalOpen, setIsMultiDeleteModalOpen] = useState(false);
+
   const fetchCars = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/cars', {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+      console.log('Fetching cars from:', `${backendUrl}/api/cars`);
+      
+      const response = await fetch(`${backendUrl}/api/cars`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-        }
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
       });
+
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch cars');
+        const errorData = await response.json().catch(() => null);
+        console.error('Error response:', errorData);
+        throw new Error(errorData?.message || 'Failed to fetch cars');
       }
-      
+
       const data = await response.json();
-      console.log('Raw data from API:', data);
-      console.log('Number of cars:', data.length);
-      console.log('First few cars:', data.slice(0, 3));
+      console.log('Fetched cars:', data);
       
-      setCars(data);
-      // Don't set filteredCars here, let the useEffect handle it
+      if (!Array.isArray(data)) {
+        console.error('Invalid data format:', data);
+        throw new Error('Invalid data format received from server');
+      }
+
+      // Sort cars by year in descending order
+      const sortedCars = data.sort((a, b) => b.year - a.year);
+      console.log('Sorted cars:', sortedCars);
+      
+      setCars(sortedCars);
+      setFilteredCars(sortedCars);
       setError(null);
     } catch (err) {
       console.error('Error fetching cars:', err);
-      setError('Failed to load cars. Please try again later.');
-      setCars([]);
-      setFilteredCars([]);
+      setError(err.message);
+      toast.error('Failed to fetch cars. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -480,11 +503,14 @@ const CarListing = () => {
   const handleDelete = async () => {
     if (currentCar) {
       try {
-        const response = await fetch(`http://localhost:5000/api/car/${currentCar._id}`, {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/cars/${currentCar._id}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
-          }
+            'Accept': 'application/json',
+          },
+          credentials: 'include'
         });
         
         if (!response.ok) {
@@ -501,60 +527,62 @@ const CarListing = () => {
     }
   };
 
-  const handleAddEdit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      console.log("Current car data:", currentCar);
-
-      // Ensure all numeric fields are properly converted and image is properly handled
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+      const url = isEditing 
+        ? `${backendUrl}/api/cars/${currentCar._id}`
+        : `${backendUrl}/api/cars`;
+      
+      // Ensure rating is included and is a valid number
       const carData = {
         ...currentCar,
-        // Enhanced image URL handling
-        image: currentCar.image?.trim() ? getImageSrc(currentCar.image?.trim()) : TEMPLATE_IMAGE,
-        brand: currentCar.brand.trim(),
-        price: Number(currentCar.price) || 0,
-        year: Number(currentCar.year) || new Date().getFullYear(),
-        mileage: Number(currentCar.mileage) || 0,
-        engineCylinders: Number(currentCar.engineCylinders) || 0,
-        engineHorsepower: Number(currentCar.engineHorsepower) || 0,
-        engineSize: Number(currentCar.engineSize) || 0,
-        rating: Number(currentCar.rating) || 0
+        rating: Number(currentCar.rating) || 0 // Default to 0 if not set or invalid
       };
 
-      console.log("Processed car data:", carData);
-
-      const url = isEditing && currentCar._id
-        ? `http://localhost:5000/api/car/${currentCar._id}`
-        : "http://localhost:5000/api/cars";
-
-      console.log("Making request to:", url, "with method:", isEditing ? "PUT" : "POST");
-
+      console.log('Submitting car data:', {
+        url,
+        method: isEditing ? 'PUT' : 'POST',
+        carId: currentCar._id,
+        data: carData
+      });
+      
       const response = await fetch(url, {
-        method: isEditing ? "PUT" : "POST",
+        method: isEditing ? 'PUT' : 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(carData),
       });
 
-      // Check if response is JSON
-      const contentType = response.headers.get("content-type");
-      let responseData;
-      if (contentType && contentType.includes("application/json")) {
-        responseData = await response.json();
-      } else {
-        const text = await response.text();
-        throw new Error(`Invalid response format: ${text}`);
-      }
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers));
 
       if (!response.ok) {
-        throw new Error(responseData.message || responseData.error || "Failed to save car");
+        let errorMessage = `Failed to ${isEditing ? 'update' : 'add'} car`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+          // Try to get the raw text if JSON parsing fails
+          const rawText = await response.text().catch(() => null);
+          console.error('Raw error response:', rawText);
+          throw new Error(`${errorMessage} - Server returned ${response.status} ${response.statusText}`);
+        }
+        throw new Error(errorMessage);
       }
 
-      await fetchCars();
-      setIsAddEditModalOpen(false);
-      // Reset the current car to initial state instead of null
+      const savedCar = await response.json();
+      console.log('Car saved successfully:', savedCar);
+      
+      // Close the modal first
+    setIsAddEditModalOpen(false);
+
+      // Reset the current car state
       setCurrentCar({
         brand: "",
         model: "",
@@ -575,16 +603,21 @@ const CarListing = () => {
         engineHorsepower: 0,
         engineCylinders: 4,
         engineSize: 2.0,
-        rating: 0
+        rating: 0 // Add default rating here too
       });
-      setError(null);
       
-      toast.success(isEditing ? "Car has been successfully updated" : "New car has been added");
-
-    } catch (err) {
-      console.error("Error saving car:", err);
-      setError(err.message || "Failed to save car. Please try again.");
-      toast.error(err.message || "Failed to save car. Please try again.");
+      // Reset editing state
+      setIsEditing(false);
+      
+      // Show success message
+      toast.success(isEditing ? 'Car updated successfully' : 'Car added successfully');
+      
+      // Fetch updated car list
+      await fetchCars();
+      
+    } catch (error) {
+      console.error('Error saving car:', error);
+      toast.error(error.message || `Failed to ${isEditing ? 'update' : 'add'} car`);
     }
   };
 
@@ -679,15 +712,35 @@ const CarListing = () => {
   };
 
   // Enhanced image source getter with better validation
-  const getImageSrc = (imageUrl, carInfo = '') => {
+  const getImageSrc = (car, carInfo = '') => {
+    // Check if car has images array with valid entries
+    if (!car.images || !Array.isArray(car.images) || car.images.length === 0) {
+      console.log(`No images array for ${carInfo}`);
+      return null;
+    }
+
+    // Find the first valid image
+    const validImage = car.images.find(img => img && img.exists && img.url);
+    if (!validImage) {
+      console.log(`No valid image found for ${carInfo}`);
+      return null;
+    }
+
+    const imageUrl = validImage.url;
+
     // Return null for any invalid or missing image URL
     if (!imageUrl || 
         imageUrl.trim() === "" || 
         imageUrl === "/placeholder.svg" || 
         imageUrl.includes('undefined') ||
         imageUrl === "null") {
-      console.log(`No image available for ${carInfo}`);
+      console.log(`Invalid image URL for ${carInfo}`);
       return null;
+    }
+
+    // Handle Google Cloud Storage URLs
+    if (imageUrl.startsWith('https://storage.googleapis.com/')) {
+      return imageUrl;
     }
 
     // Handle relative and absolute URLs
@@ -700,7 +753,7 @@ const CarListing = () => {
       new URL(imageUrl);
       return imageUrl;
     } catch {
-      console.log(`Invalid URL format for ${carInfo}`);
+      console.log(`Invalid URL format for ${carInfo}: ${imageUrl}`);
       return null;
     }
   };
@@ -711,33 +764,191 @@ const CarListing = () => {
 
     try {
       setUploadingImage(true);
-
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append('file', file);
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
+      console.log('Uploading file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
         body: formData,
       });
 
-      const data = await response.json();
+      // Log the raw response for debugging
+      console.log('Upload response status:', response.status);
+      console.log('Upload response headers:', Object.fromEntries(response.headers.entries()));
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to upload image");
+      // Try to parse the response as JSON
+      let data;
+      try {
+        const text = await response.text();
+        console.log('Raw response text:', text);
+        
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          console.error('Error parsing JSON:', parseError);
+          throw new Error('Invalid server response format');
+        }
+      } catch (error) {
+        console.error('Error reading response:', error);
+        throw new Error('Failed to read server response');
       }
 
-      // Update the car state with the new image URL
+      if (!response.ok) {
+        console.error('Upload failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: data
+        });
+        
+        // Construct a more descriptive error message
+        let errorMessage = 'Failed to upload image';
+        if (data && typeof data === 'object') {
+          if (data.error) {
+            errorMessage = data.error;
+            if (data.details) {
+              errorMessage += `: ${data.details}`;
+            }
+          } else if (data.message) {
+            errorMessage = data.message;
+          }
+        }
+        
+        // Log the error details for debugging
+        console.error('Upload error details:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: data,
+          errorMessage: errorMessage
+        });
+        
+        throw new Error(errorMessage);
+      }
+
+      if (!data || !data.success || !data.url) {
+        console.error('Invalid response data:', data);
+        throw new Error(data?.error || 'No image URL received from server');
+      }
+
+      console.log('Upload successful:', data.url);
       setCurrentCar(prev => ({
         ...prev,
-        image: data.imageUrl
+        image: data.url
       }));
-
-      toast.success("Image uploaded successfully");
+      
+      // Refresh the car list to show the updated image
+      await fetchCars();
+      
+      toast.success(data.message || 'Image uploaded successfully');
     } catch (error) {
-      console.error("Upload error:", error);
-      toast.error(error.message || "Failed to upload image");
+      // Log the error for debugging
+      console.error('Upload error:', {
+        message: error.message,
+        stack: error.stack,
+        error: error
+      });
+      
+      // Show a user-friendly error message
+      toast.error(error.message || 'Failed to upload image. Please try again.');
     } finally {
       setUploadingImage(false);
+    }
+  };
+
+  const handlePriceRangeChange = (values) => {
+    setPriceRange(values);
+    setFilters(prev => ({
+      ...prev,
+      minPrice: values[0].toString(),
+      maxPrice: values[1].toString()
+    }));
+  };
+
+  const handleYearRangeChange = (values) => {
+    setYearRange(values);
+    setFilters(prev => ({
+      ...prev,
+      minYear: values[0].toString(),
+      maxYear: values[1].toString()
+    }));
+  };
+
+  // Add handler for selecting/deselecting all cars
+  const handleSelectAll = (e) => {
+    setSelectAll(e.target.checked);
+    if (e.target.checked) {
+      setSelectedCars(currentCars.map(car => car._id));
+    } else {
+      setSelectedCars([]);
+    }
+  };
+
+  // Add handler for selecting individual cars
+  const handleSelectCar = (carId) => {
+    setSelectedCars(prev => {
+      if (prev.includes(carId)) {
+        const newSelected = prev.filter(id => id !== carId);
+        setSelectAll(false);
+        return newSelected;
+      } else {
+        const newSelected = [...prev, carId];
+        if (newSelected.length === currentCars.length) {
+          setSelectAll(true);
+        }
+        return newSelected;
+      }
+    });
+  };
+
+  // Add handler for deleting multiple cars
+  const handleMultiDelete = async () => {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+      console.log('Sending delete request to:', `${backendUrl}/api/cars/bulk-delete`);
+      
+      const response = await fetch(`${backendUrl}/api/cars/bulk-delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ carIds: selectedCars }),
+      });
+
+      console.log('Bulk delete response status:', response.status);
+      console.log('Selected car IDs:', selectedCars);
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to delete cars';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+          // Try to get the raw text if JSON parsing fails
+          const rawText = await response.text().catch(() => null);
+          console.error('Raw error response:', rawText);
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log('Bulk delete successful:', data);
+
+      await fetchCars(); // Refresh the list
+      setSelectedCars([]);
+      setSelectAll(false);
+      setIsMultiDeleteModalOpen(false);
+      toast.success(data.message || 'Selected cars deleted successfully');
+    } catch (err) {
+      console.error('Error deleting cars:', err);
+      toast.error(err.message || 'Failed to delete cars');
     }
   };
 
@@ -747,11 +958,120 @@ const CarListing = () => {
       <Sidebar />
       <div className="flex-1 ml-64">
         <div className="p-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white">Car Inventory</h1>
-            <p className="text-slate-400 mt-2">
-              Manage your vehicle listings and inventory
-            </p>
+          {/* Header with Add New Car and Delete Selected buttons */}
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold text-white">Car Inventory</h1>
+            <div className="flex gap-4">
+              {selectedCars.length > 0 && (
+                <Button 
+                  onClick={() => setIsMultiDeleteModalOpen(true)}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete Selected ({selectedCars.length})
+                </Button>
+              )}
+              <Button onClick={openAddModal} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" /> Add New Car
+              </Button>
+            </div>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="mb-6">
+            {/* Search Bar */}
+            <div className="relative w-full max-w-xl mb-6">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <Input
+                type="text"
+                placeholder="Search cars..."
+                value={search}
+                onChange={handleSearch}
+                className="pl-10 bg-slate-900 border-slate-800 text-white w-full placeholder:text-white/70"
+              />
+            </div>
+
+            {/* Filters Section */}
+            <div className="grid gap-6">
+              {/* Price Range Slider */}
+              <div className="bg-slate-900 p-4 rounded-lg border border-slate-800">
+                <Label className="text-white mb-2 block">Price Range</Label>
+                <div className="px-3">
+                  <Slider
+                    defaultValue={[0, 1000000]}
+                    max={1000000}
+                    step={1000}
+                    value={priceRange}
+                    onValueChange={handlePriceRangeChange}
+                    className="my-4"
+                  />
+                </div>
+                <div className="flex justify-between text-sm text-slate-400">
+                  <span>${priceRange[0].toLocaleString()}</span>
+                  <span>${priceRange[1].toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Year Range Slider */}
+              <div className="bg-slate-900 p-4 rounded-lg border border-slate-800">
+                <Label className="text-white mb-2 block">Year Range</Label>
+                <div className="px-3">
+                  <Slider
+                    defaultValue={[1990, new Date().getFullYear()]}
+                    min={1990}
+                    max={new Date().getFullYear()}
+                    step={1}
+                    value={yearRange}
+                    onValueChange={handleYearRangeChange}
+                    className="my-4"
+                  />
+                </div>
+                <div className="flex justify-between text-sm text-slate-400">
+                  <span>{yearRange[0]}</span>
+                  <span>{yearRange[1]}</span>
+                </div>
+              </div>
+
+              {/* Type and Status Filters */}
+              <div className="flex flex-wrap gap-4">
+                <Select 
+                  value={filters.type} 
+                  onValueChange={(value) => handleFilterChange("type", value)}
+                >
+                  <SelectTrigger className="w-40 bg-slate-900 border-slate-800 text-white">
+                    <SelectValue placeholder="Type" className="text-white/70" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    {uniqueTypes.map((type) => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select 
+                  value={filters.status} 
+                  onValueChange={(value) => handleFilterChange("status", value)}
+                >
+                  <SelectTrigger className="w-40 bg-slate-900 border-slate-800 text-white">
+                    <SelectValue placeholder="Status" className="text-white/70" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    {uniqueStatuses.map((status) => (
+                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+            <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800"
+            >
+                  Clear Filters
+            </Button>
+              </div>
+            </div>
           </div>
 
           {loading ? (
@@ -764,158 +1084,69 @@ const CarListing = () => {
             </div>
           ) : (
             <>
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 bg-slate-900/50 border-slate-800 p-4 rounded-lg">
-            <div className="relative w-full sm:w-96">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
-                size={18}
-              />
-              <Input
-                type="text"
-                placeholder="Search cars..."
-                value={search}
-                onChange={handleSearch}
-                    className="pl-10 bg-slate-800 border-slate-700 text-white"
-              />
-            </div>
-                <div className="flex flex-wrap gap-2 items-center">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Min Price"
-                      value={filters.minPrice}
-                      onChange={(e) => handlePriceChange("minPrice", e.target.value)}
-                      className="w-24 bg-slate-800 border-slate-700 text-white"
-                      min="0"
-                    />
-                    <span className="text-slate-400">-</span>
-                    <Input
-                      type="number"
-                      placeholder="Max Price"
-                      value={filters.maxPrice}
-                      onChange={(e) => handlePriceChange("maxPrice", e.target.value)}
-                      className="w-24 bg-slate-800 border-slate-700 text-white"
-                      min="0"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Min Year"
-                      value={filters.minYear}
-                      onChange={(e) => {
-                        console.log('Min year input change:', { value: e.target.value });
-                        handleFilterChange("minYear", e.target.value);
-                      }}
-                      className="w-24 bg-slate-800 border-slate-700 text-white"
-                      min="1900"
-                      max={new Date().getFullYear() + 1}
-                    />
-                    <span className="text-slate-400">-</span>
-                    <Input
-                      type="number"
-                      placeholder="Max Year"
-                      value={filters.maxYear}
-                      onChange={(e) => {
-                        console.log('Max year input change:', { value: e.target.value });
-                        handleFilterChange("maxYear", e.target.value);
-                      }}
-                      className="w-24 bg-slate-800 border-slate-700 text-white"
-                      min="1900"
-                      max={new Date().getFullYear() + 1}
-                    />
-                  </div>
-                  <Select 
-                    value={filters.type} 
-                    onValueChange={(value) => handleFilterChange("type", value)}
-                  >
-                    <SelectTrigger className="w-32 bg-slate-800 border-slate-700 text-white">
-                      <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      {uniqueTypes.map((type) => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select 
-                    value={filters.status} 
-                    onValueChange={(value) => handleFilterChange("status", value)}
-                  >
-                    <SelectTrigger className="w-32 bg-slate-800 border-slate-700 text-white">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      {uniqueStatuses.map((status) => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="outline"
-                    className="border-slate-700 text-slate-400 hover:text-white"
-                    onClick={clearFilters}
-                  >
-                    Clear Filters
-                  </Button>
-            </div>
-            <Button
-              onClick={openAddModal}
-                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add New Car
-            </Button>
-          </div>
-
               {/* Results Count */}
-              <div className="flex justify-between items-center mb-6">
-                <div className="text-sm text-slate-400">
-                  {filteredCars.length} {filteredCars.length === 1 ? 'vehicle' : 'vehicles'} found
-                </div>
+              <div className="text-sm text-slate-400 mb-6">
+                {filteredCars.length} {filteredCars.length === 1 ? 'vehicle' : 'vehicles'} found
               </div>
 
-          <div className="mt-6 bg-gray-900 rounded-lg border border-gray-800">
-            <div className="overflow-x-auto">
-              <table className="w-full text-white">
-                <TableHeader>
-                  <TableRow className="border-slate-800">
-                    <TableHead className="text-slate-400">Car</TableHead>
-                    <TableHead className="text-slate-400">Details</TableHead>
-                    <TableHead className="text-slate-400">Price</TableHead>
-                    <TableHead className="text-slate-400">Status</TableHead>
-                    <TableHead className="text-slate-400">Location</TableHead>
-                    <TableHead className="text-slate-400 text-right">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                          {currentCars.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={6} className="text-center text-slate-400 py-8">
-                                No cars found matching your filters
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            currentCars.map((car) => (
-                              <TableRow key={car._id} className="border-slate-800">
-                        <TableCell>
-                          <div className="flex items-center">
-                                <div className="h-10 w-16 flex-shrink-0 mr-4 bg-slate-800 rounded">
-                                  <div className="h-10 w-16 flex items-center justify-center text-slate-400">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                  </div>
-                            </div>
-                            <div>
-                                      <div className="font-medium text-white text-lg">
-                                        {car.brand.charAt(0).toUpperCase() + car.brand.slice(1)} {car.model}
+              <div className="mt-6 bg-gray-900 rounded-lg border border-gray-800">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-white">
+              <TableHeader>
+                <TableRow className="border-slate-800">
+                  <TableHead className="text-slate-400 w-12">
+                    <input
+                      type="checkbox"
+                      checked={selectAll}
+                      onChange={handleSelectAll}
+                      className="rounded border-slate-700 bg-slate-800 text-blue-600"
+                    />
+                  </TableHead>
+                  <TableHead className="text-slate-400">Car</TableHead>
+                  <TableHead className="text-slate-400">Details</TableHead>
+                  <TableHead className="text-slate-400">Price</TableHead>
+                  <TableHead className="text-slate-400">Status</TableHead>
+                  <TableHead className="text-slate-400">Location</TableHead>
+                  <TableHead className="text-slate-400 text-right">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                      {currentCars.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center text-slate-400 py-8">
+                            No cars found matching your filters
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        currentCars.map((car) => (
+                          <TableRow key={car._id} className="border-slate-800">
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        checked={selectedCars.includes(car._id)}
+                        onChange={() => handleSelectCar(car._id)}
+                        className="rounded border-slate-700 bg-slate-800 text-blue-600"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <div className="h-10 w-16 flex-shrink-0 mr-4 bg-slate-800 rounded overflow-hidden">
+                          <ImageWithFallback
+                            src={getImageSrc(car, `${car.brand} ${car.model}`)}
+                            alt={`${car.brand} ${car.model}`}
+                            width={64}
+                            height={40}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <div className="font-medium text-white text-lg">
+                            {car.brand.charAt(0).toUpperCase() + car.brand.slice(1)} {car.model}
                           </div>
-                                      <div className="text-base text-blue-400 font-semibold">
-                                        Year: {car.year}
+                          <div className="text-base text-blue-400 font-semibold">
+                            Year: {car.year}
                           </div>
                         </div>
                       </div>
@@ -924,19 +1155,19 @@ const CarListing = () => {
                               <div className="text-white font-medium mb-1">
                                 {car.type} • {car.year}
                               </div>
-                        <div className="text-sm text-slate-400">
-                                      {car.steering} Hand • {car.mileage?.toLocaleString() || 0} mi
-                                    </div>
-                                    <div className="text-sm text-slate-400">
-                                      Transmission: {car.transmission || 'N/A'}
-                                    </div>
-                                    <div className="text-sm text-slate-400">
-                                      Fuel Type: {car.fuel || 'N/A'}
-                                    </div>
-                                    <div className="text-sm text-slate-400">
-                                      Color: {car.color || 'N/A'}
-                        </div>
-                      </TableCell>
+                      <div className="text-sm text-slate-400">
+                                {car.steering} Hand • {car.mileage?.toLocaleString() || 0} mi
+                              </div>
+                              <div className="text-sm text-slate-400">
+                                Transmission: {car.transmission || 'N/A'}
+                              </div>
+                              <div className="text-sm text-slate-400">
+                                Fuel Type: {car.fuel || 'N/A'}
+                              </div>
+                              <div className="text-sm text-slate-400">
+                                Color: {car.color || 'N/A'}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="font-medium text-white">
                         {formatPrice(car.price)}
@@ -945,16 +1176,16 @@ const CarListing = () => {
                     <TableCell>
                       <Badge
                         variant={
-                                    car.status === "available"
+                                  car.status === "available"
                             ? "default"
-                                      : car.status === "reserved"
+                                  : car.status === "reserved"
                             ? "secondary"
                             : "outline"
                         }
                         className={
-                                    car.status === "available"
+                                  car.status === "available"
                             ? "bg-emerald-500/10 text-emerald-500"
-                                      : car.status === "reserved"
+                                  : car.status === "reserved"
                             ? "bg-yellow-500/10 text-yellow-500"
                             : "bg-slate-800 text-slate-400"
                         }
@@ -986,81 +1217,64 @@ const CarListing = () => {
                       </Button>
                     </TableCell>
                   </TableRow>
-                          ))
-                        )}
-                </TableBody>
-              </table>
-            </div>
+                        ))
+                      )}
+              </TableBody>
+                  </table>
+                </div>
 
-            {/* Pagination Controls */}
-            {filteredCars.length > 0 && (
-              <div className="p-4 border-t border-gray-800">
-                <div className="flex justify-between items-center">
-                  {/* Results Counter */}
-                  <div className="text-gray-400">
-                    Showing {indexOfFirstCar + 1}-{Math.min(indexOfLastCar, filteredCars.length)} of {filteredCars.length} cars
-                  </div>
-
-                  <div className="flex items-center space-x-2">
+                {/* Pagination Controls */}
+                {filteredCars.length > 0 && (
+                  <div className="p-4 border-t border-gray-800">
+                    <div className="flex justify-between items-center">
+                      <div className="text-gray-400">
+                        Showing {indexOfFirstCar + 1}-{Math.min(indexOfLastCar, filteredCars.length)} of {filteredCars.length} cars
+                      </div>
+                      <div className="flex items-center space-x-2">
+                <Button
+                          onClick={() => paginate(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="bg-gray-800 hover:bg-gray-700 text-white disabled:opacity-50"
+                >
+                  Previous
+                </Button>
+                        <div className="flex space-x-2">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .filter(num => num === 1 || num === totalPages || num === currentPage || num === currentPage - 1 || num === currentPage + 1)
+                            .map((number) => {
+                              if (number > 1 && number < totalPages && ![currentPage - 1, currentPage, currentPage + 1].includes(number)) {
+                                return <span key={`ellipsis-${number}`} className="text-gray-400">...</span>;
+                              }
+                              return (
+                <Button
+                                  key={number}
+                                  onClick={() => paginate(number)}
+                                  className={`px-4 py-2 ${currentPage === number ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}
+                                >
+                                  {number}
+                </Button>
+                              );
+                            })}
+              </div>
                     <Button
-                      onClick={() => paginate(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="bg-gray-800 hover:bg-gray-700 text-white disabled:opacity-50"
-                    >
-                      Previous
+                          onClick={() => paginate(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className="bg-gray-800 hover:bg-gray-700 text-white disabled:opacity-50"
+                        >
+                          Next
                     </Button>
-                    
-                    <div className="flex space-x-2">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1)
-                        .filter(num => {
-                          // Show first page, last page, current page, and one page before and after current
-                          return num === 1 || 
-                                 num === totalPages || 
-                                 num === currentPage || 
-                                 num === currentPage - 1 || 
-                                 num === currentPage + 1;
-                        })
-                        .map((number) => {
-                          // If there's a gap, show ellipsis
-                          if (number > 1 && number < totalPages && 
-                              ![currentPage - 1, currentPage, currentPage + 1].includes(number)) {
-                            return <span key={`ellipsis-${number}`} className="text-gray-400">...</span>;
-                          }
-                          return (
-                            <Button
-                              key={number}
-                              onClick={() => paginate(number)}
-                              className={`px-4 py-2 ${
-                                currentPage === number
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-gray-800 hover:bg-gray-700 text-white'
-                              }`}
-                            >
-                              {number}
-                            </Button>
-                          );
-                        })}
-                    </div>
-
-                    <Button
-                      onClick={() => paginate(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="bg-gray-800 hover:bg-gray-700 text-white disabled:opacity-50"
-                    >
-                      Next
-                    </Button>
-                  </div>
                 </div>
               </div>
-            )}
+            </div>
+                )}
 
-            {/* No Results Message */}
-            {filteredCars.length === 0 && (
-              <div className="p-4 text-center text-gray-400">
-                No cars found matching your criteria.
-              </div>
-            )}
+                {/* No Results Message */}
+                {filteredCars.length === 0 && (
+                  <div className="p-4 text-center text-gray-400">
+                    No cars found matching your criteria.
           </div>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -1076,7 +1290,7 @@ const CarListing = () => {
               {isEditing ? "Edit car details in your inventory" : "Add a new car to your inventory"}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddEdit}>
+          <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
               {/* Image URL input */}
               <div className="grid gap-2">
@@ -1084,6 +1298,27 @@ const CarListing = () => {
                   Car Image
                 </Label>
                 <div className="flex gap-4 items-start">
+                  {/* Image Preview */}
+                  <div className="w-48 h-32 border-2 border-dashed border-slate-700 rounded-lg overflow-hidden bg-slate-800/50">
+                    {currentCar.image ? (
+                      <ImageWithFallback
+                        src={currentCar.image}
+                        alt="Car preview"
+                        width={192}
+                        height={128}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                        <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-xs">No image selected</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Upload Button */}
                   <div className="flex-1">
                     <div className="relative">
                 <Input
@@ -1093,16 +1328,33 @@ const CarListing = () => {
                         accept="image/jpeg,image/png,image/gif,image/webp"
                         onChange={handleImageUpload}
                         disabled={uploadingImage}
-                        className="bg-slate-800 border-slate-700 text-white cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-slate-700 file:text-white hover:file:bg-slate-600"
+                        className="hidden"
                       />
-                      {uploadingImage && (
-                        <div className="absolute inset-0 bg-slate-800/50 flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                        </div>
-                      )}
+                      <Label
+                        htmlFor="image"
+                        className={`flex items-center justify-center w-full h-10 px-4 rounded-lg cursor-pointer transition-colors ${
+                          uploadingImage
+                            ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                            : 'bg-slate-800 hover:bg-slate-700 text-white'
+                        }`}
+                      >
+                        {uploadingImage ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Choose Image
+                          </>
+                        )}
+                      </Label>
                     </div>
-                    <p className="text-sm text-slate-400 mt-2">
-                      {uploadingImage ? "Uploading image..." : "Supported formats: JPG, PNG, GIF, WebP (max 5MB)"}
+                    <p className="text-xs text-slate-400 mt-2">
+                      Supported formats: JPG, PNG, GIF, WebP (max 5MB)
                     </p>
                   </div>
                 </div>
@@ -1367,6 +1619,14 @@ const CarListing = () => {
 
             <DialogFooter>
               <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAddEditModalOpen(false)}
+                className="border-slate-700 text-slate-400 hover:bg-slate-800"
+              >
+                Cancel
+              </Button>
+              <Button
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-500 text-white"
               >
@@ -1400,6 +1660,34 @@ const CarListing = () => {
               className="bg-red-600 hover:bg-red-500"
             >
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add new modal for multiple delete confirmation */}
+      <Dialog open={isMultiDeleteModalOpen} onOpenChange={setIsMultiDeleteModalOpen}>
+        <DialogContent className="bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-white">Delete Multiple Cars</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Are you sure you want to delete {selectedCars.length} selected cars? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsMultiDeleteModalOpen(false)}
+              className="border-slate-700 text-slate-400 hover:bg-slate-800"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleMultiDelete}
+              className="bg-red-600 hover:bg-red-500"
+            >
+              Delete Selected
             </Button>
           </DialogFooter>
         </DialogContent>

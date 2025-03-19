@@ -6,10 +6,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import user_img from "../../../public/img/user_img.png";
 import { useAuth } from "../context/AuthContext";
+import { Menu, X, Car } from "lucide-react";
+import { useState } from "react";
 
 const Navbar = () => {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleProfileClick = () => {
     router.push("/profile");
@@ -29,7 +32,6 @@ const Navbar = () => {
     const authenticatedLinks = [
       ...publicLinks,
       { href: "/appointments", label: "Booking and Visiting" },
-      // { href: "/booking", label: "Booking and Visiting" },
     ];
 
     // Admin link
@@ -46,16 +48,23 @@ const Navbar = () => {
     return authenticatedLinks;
   };
 
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
 
   return (
     <nav className="flex justify-between items-center p-4 bg-gray-900 text-white">
-      <h1 className="text-xl font-bold">
-        <span className="text-white">Car</span>
-        <span className="text-blue-400"> Selling</span>
-      </h1>
+      <div className="flex items-center">
+        <Car className="w-6 h-6 mr-2 text-white" />
+        <h1 className="text-xl font-bold">
+          <span className="text-white">ZKH</span>
+          <span className="text-blue-400">Auto</span>
+        </h1>
+      </div>
       <div className="hidden md:flex space-x-6">
         {getNavigationLinks().map((link) => (
           <Link

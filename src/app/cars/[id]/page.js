@@ -18,15 +18,70 @@ export default function CarDetails() {
     const fetchCarDetails = async () => {
       try {
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-        const response = await fetch(`${backendUrl}/api/car/${id}`);
+        console.log("Fetching car with ID:", id);
+        const response = await fetch(`${backendUrl}/api/cars/${id}`, {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Error response:", response.status, errorText);
           throw new Error(`Failed to fetch car details (Status: ${response.status})`);
         }
+
         const data = await response.json();
         if (!data) {
           throw new Error('No car data received');
         }
-        console.log('Fetched car data:', data);
+        
+        // Add detailed logging of car data
+        console.log('Fetched car data:', {
+          id: data._id,
+          brand: data.brand,
+          model: data.model,
+          year: data.year,
+          price: data.price,
+          images: data.images,
+          specifications: {
+            type: data.type,
+            transmission: data.transmission,
+            fuel: data.fuel,
+            color: data.color,
+            steering: data.steering,
+            mileage: data.mileage,
+            status: data.status,
+            location: data.location
+          },
+          engine: {
+            driveTrain: data.driveTrain,
+            transmission: data.engineTransmission,
+            horsepower: data.engineHorsepower,
+            cylinders: data.engineCylinders,
+            size: data.engineSize
+          }
+        });
+
+        // Validate images array
+        if (!data.images) {
+          console.log('No images array found in car data');
+          data.images = [];
+        } else if (!Array.isArray(data.images)) {
+          console.log('Images is not an array, converting to array:', data.images);
+          data.images = [data.images].filter(Boolean);
+        }
+
+        // Log image validation results
+        data.images.forEach((img, index) => {
+          console.log(`Image ${index + 1}:`, {
+            exists: img?.exists,
+            url: img?.url,
+            isValid: !!(img?.exists && img?.url)
+          });
+        });
+
         setCar(data);
         setLoading(false);
       } catch (err) {
@@ -96,27 +151,75 @@ export default function CarDetails() {
         <div className="bg-gray-900 rounded-lg shadow-xl overflow-hidden border border-gray-800">
           {/* Image Gallery */}
           <div className="relative h-96 bg-gray-800">
-            <Image
-              src={car.images?.[0]?.url || "https://storage.googleapis.com/zkhauto_bucket/car-images/rolls-royce/rolls-phantom-2.jpg"}
-              alt={`${car.brand} ${car.model}`}
-              fill
-              className="object-contain"
-              priority={true}
-              quality={100}
-              onError={(e) => {
-                console.error('Image load error:', car.images?.[0]?.url);
-                e.target.src = "https://storage.googleapis.com/zkhauto_bucket/car-images/rolls-royce/rolls-phantom-2.jpg";
-              }}
-              unoptimized={true}
-            />
+            {car.images?.length > 0 ? (
+              car.images[0]?.exists && car.images[0]?.url ? (
+                <Image
+                  src={car.images[0].url}
+                  alt={`${car.brand} ${car.model}`}
+                  fill
+                  className="object-contain"
+                  priority={true}
+                  quality={100}
+                  onError={(e) => {
+                    console.error('Image load error for:', {
+                      brand: car.brand,
+                      model: car.model,
+                      imageData: car.images[0],
+                      error: e.target.error
+                    });
+                    e.target.style.display = 'none';
+                    const parent = e.target.parentElement;
+                    if (parent) {
+                      const div = document.createElement('div');
+                      div.className = 'flex items-center justify-center h-full text-gray-500';
+                      div.innerHTML = `
+                        <div class="text-center">
+                          <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <p>Failed to load image</p>
+                          <p class="text-sm mt-1">${car.images[0].url}</p>
+                        </div>
+                      `;
+                    }
+                  }}
+                  unoptimized={true}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p>Image marked as not available</p>
+                    {car.images[0]?.url && (
+                      <p className="text-sm mt-1">URL: {car.images[0].url}</p>
+                    )}
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <div className="text-center">
+                  <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <p>No images available for this vehicle</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Car Information */}
           <div className="p-8">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h1 className="text-4xl font-bold mb-2">{car.brand} {car.model}</h1>
-                <p className="text-2xl text-blue-400 font-bold">${car.price.toLocaleString()}</p>
+                <h1 className="text-4xl font-bold mb-2">
+                  {car.brand.charAt(0).toUpperCase() + car.brand.slice(1)} {car.model}
+                </h1>
+                <p className="text-2xl text-blue-400 font-bold">
+                  ${(car.price || 0).toLocaleString()}
+                </p>
               </div>
               <Button 
                 className="bg-blue-600 hover:bg-blue-700"
@@ -154,48 +257,86 @@ export default function CarDetails() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               <div className="bg-gray-800 p-4 rounded-lg">
                 <h3 className="text-gray-400 mb-1">Year</h3>
-                <p className="text-xl">{car.year}</p>
+                <p className="text-xl">{car.year || 'N/A'}</p>
               </div>
               <div className="bg-gray-800 p-4 rounded-lg">
                 <h3 className="text-gray-400 mb-1">Mileage</h3>
-                <p className="text-xl">{car.mileage.toLocaleString()} miles</p>
+                <p className="text-xl">{(car.mileage || 0).toLocaleString()} miles</p>
               </div>
               <div className="bg-gray-800 p-4 rounded-lg">
                 <h3 className="text-gray-400 mb-1">Type</h3>
-                <p className="text-xl">{car.type}</p>
+                <p className="text-xl">{car.type || 'N/A'}</p>
               </div>
               <div className="bg-gray-800 p-4 rounded-lg">
-                <h3 className="text-gray-400 mb-1">Condition</h3>
-                <p className="text-xl">{car.condition}</p>
+                <h3 className="text-gray-400 mb-1">Status</h3>
+                <p className="text-xl capitalize">{car.status || 'N/A'}</p>
               </div>
               <div className="bg-gray-800 p-4 rounded-lg">
                 <h3 className="text-gray-400 mb-1">Transmission</h3>
-                <p className="text-xl">{car.transmission}</p>
+                <p className="text-xl">{car.transmission || 'N/A'}</p>
               </div>
               <div className="bg-gray-800 p-4 rounded-lg">
                 <h3 className="text-gray-400 mb-1">Fuel Type</h3>
-                <p className="text-xl">{car.fuelType}</p>
+                <p className="text-xl">{car.fuel || 'N/A'}</p>
+              </div>
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <h3 className="text-gray-400 mb-1">Color</h3>
+                <p className="text-xl">{car.color || 'N/A'}</p>
+              </div>
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <h3 className="text-gray-400 mb-1">Steering</h3>
+                <p className="text-xl">{car.steering || 'N/A'} Hand Drive</p>
+              </div>
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <h3 className="text-gray-400 mb-1">Location</h3>
+                <p className="text-xl">{car.location || 'N/A'}</p>
               </div>
             </div>
 
             {/* Description */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">Description</h2>
-              <p className="text-gray-300 leading-relaxed whitespace-pre-line">
-                {car.description}
-              </p>
-            </div>
+            {car.description && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">Description</h2>
+                <p className="text-gray-300 leading-relaxed whitespace-pre-line">
+                  {car.description}
+                </p>
+              </div>
+            )}
 
-            {/* Features */}
+            {/* Additional Details */}
             <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">Features</h2>
+              <h2 className="text-2xl font-bold mb-4">Additional Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {car.features?.map((feature, index) => (
-                  <div key={index} className="flex items-center text-gray-300">
+                {car.driveTrain && (
+                  <div className="flex items-center text-gray-300">
                     <span className="mr-2">•</span>
-                    {feature}
+                    Drive Train: {car.driveTrain}
                   </div>
-                ))}
+                )}
+                {car.engineTransmission && (
+                  <div className="flex items-center text-gray-300">
+                    <span className="mr-2">•</span>
+                    Engine Transmission: {car.engineTransmission}
+                  </div>
+                )}
+                {car.engineHorsepower && (
+                  <div className="flex items-center text-gray-300">
+                    <span className="mr-2">•</span>
+                    Horsepower: {car.engineHorsepower}
+                  </div>
+                )}
+                {car.engineCylinders && (
+                  <div className="flex items-center text-gray-300">
+                    <span className="mr-2">•</span>
+                    Cylinders: {car.engineCylinders}
+                  </div>
+                )}
+                {car.engineSize && (
+                  <div className="flex items-center text-gray-300">
+                    <span className="mr-2">•</span>
+                    Engine Size: {car.engineSize}L
+                  </div>
+                )}
               </div>
             </div>
           </div>
