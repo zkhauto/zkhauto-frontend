@@ -319,7 +319,7 @@ const CarListing = () => {
                   <div className="flex items-center justify-end w-full max-w-[100px]">
                     <span className="text-sm text-gray-400">$1M</span>
                   </div>
-                </div>
+          </div>
                 <Slider
                   defaultValue={[0, 1000000]}
                   max={1000000}
@@ -330,7 +330,7 @@ const CarListing = () => {
                   }
                   className="w-full"
                 />
-              </div>
+          </div>
 
               {/* Year Range */}
               <div className="mt-6 bg-gray-800 p-4 rounded-lg">
@@ -356,8 +356,8 @@ const CarListing = () => {
                   }
                   className="w-full"
                 />
-              </div>
-            </div>
+                  </div>
+                </div>
 
             {/* Cars Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

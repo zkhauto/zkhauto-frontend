@@ -2,19 +2,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import heroImg from "../../../public/img/hero0.png";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Search, MapPin, Calendar, DollarSign } from "lucide-react";
+import Sidebar from "./Sidebar";
 import "swiper/css";
 import "swiper/css/pagination";
 import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Navbar from "./Navbar";
-import Footer from "./Footer";
 
-import {
-  default as heroImg1,
-  default as heroImg2,
-  default as heroImg3,
-} from "../../../public/img/hero0.png";
+// Import hero images individually for better optimization
+import heroImg1 from "../../../public/img/hero0.png";
+import heroImg2 from "../../../public/img/hero0.png";
+import heroImg3 from "../../../public/img/hero0.png";
 
 const slides = [
   {
@@ -48,7 +50,7 @@ const slides = [
 
 const Hero = () => {
   return (
-    <div>
+    <div className="min-h-screen bg-gray-900">
       <Navbar />
       <section className="relative bg-gray-900 overflow-hidden">
         <Swiper
@@ -58,7 +60,7 @@ const Hero = () => {
           className="w-full"
         >
           {slides.map((slide, index) => (
-            <SwiperSlide key={index}>
+            <SwiperSlide key={index} className="bg-gray-900">
               <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="relative min-h-[400px] sm:min-h-[500px] md:min-h-[500px] lg:min-h-[600px] flex flex-col md:flex-row items-center">
                   {/* Left Content */}
@@ -89,11 +91,13 @@ const Hero = () => {
                   <div className="hidden md:block relative w-full md:absolute md:right-[-5%] md:top-1/2 md:-translate-y-1/2 md:w-[55%] lg:w-[50%] md:h-[350px] lg:h-[400px]">
                     <Image
                       src={slide.image}
-                      alt="Luxury Car"
+                      alt={`${slide.title} ${slide.highlight}`}
                       width={1200}
                       height={800}
                       className="object-contain object-center w-full h-full"
-                      priority
+                      priority={index === 0}
+                      loading={index === 0 ? "eager" : "lazy"}
+                      quality={90}
                     />
                   </div>
                 </div>
@@ -102,7 +106,6 @@ const Hero = () => {
           ))}
         </Swiper>
       </section>
-      <Footer />
     </div>
   );
 };

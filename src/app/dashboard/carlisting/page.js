@@ -535,17 +535,27 @@ const CarListing = () => {
         ? `${backendUrl}/api/cars/${currentCar._id}`
         : `${backendUrl}/api/cars`;
       
-      // Ensure rating is included and is a valid number
+      // Log the current car data before submission
+      console.log('Current car data before submission:', currentCar);
+
+      // Create the car data object with proper image structure
       const carData = {
         ...currentCar,
-        rating: Number(currentCar.rating) || 0 // Default to 0 if not set or invalid
+        rating: Number(currentCar.rating) || 0,
+        // Only include images if we have a valid image URL
+        images: currentCar.image ? [{
+          url: currentCar.image,
+          exists: true
+        }] : []
       };
 
+      // Log the final car data being sent
       console.log('Submitting car data:', {
         url,
         method: isEditing ? 'PUT' : 'POST',
         carId: currentCar._id,
-        data: carData
+        data: carData,
+        imageUrl: currentCar.image
       });
       
       const response = await fetch(url, {
@@ -568,7 +578,6 @@ const CarListing = () => {
           errorMessage = errorData.message || errorData.error || errorMessage;
         } catch (parseError) {
           console.error('Error parsing error response:', parseError);
-          // Try to get the raw text if JSON parsing fails
           const rawText = await response.text().catch(() => null);
           console.error('Raw error response:', rawText);
           throw new Error(`${errorMessage} - Server returned ${response.status} ${response.statusText}`);
@@ -603,7 +612,7 @@ const CarListing = () => {
         engineHorsepower: 0,
         engineCylinders: 4,
         engineSize: 2.0,
-        rating: 0 // Add default rating here too
+        rating: 0
       });
       
       // Reset editing state
@@ -659,58 +668,6 @@ const CarListing = () => {
     }).format(price);
   };
 
-  // Enhanced image handling function with state management
-  const ImageWithFallback = ({ src, alt, ...props }) => {
-    // If no image source or it's the template, don't render the image component
-    if (!src || src === TEMPLATE_IMAGE) {
-      return (
-        <div className="h-full w-full flex items-center justify-center bg-slate-800 text-slate-400 text-sm">
-          <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          No Image
-        </div>
-      );
-    }
-
-    const [imgSrc, setImgSrc] = useState(src);
-    const [error, setError] = useState(false);
-
-    useEffect(() => {
-      setImgSrc(src);
-      setError(false);
-    }, [src]);
-
-    const handleError = () => {
-      if (!error) {
-        console.error('Image load error:', imgSrc);
-        setError(true);
-        setImgSrc(null);
-      }
-    };
-
-    if (!imgSrc || error) {
-      return (
-        <div className="h-full w-full flex items-center justify-center bg-slate-800 text-slate-400 text-sm">
-          <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          No Image
-        </div>
-      );
-    }
-
-    return (
-      <Image
-        {...props}
-        src={imgSrc}
-        alt={alt}
-        onError={handleError}
-        unoptimized={!imgSrc.startsWith('/')}
-      />
-    );
-  };
-
   // Enhanced image source getter with better validation
   const getImageSrc = (car, carInfo = '') => {
     // Check if car has images array with valid entries
@@ -740,22 +697,81 @@ const CarListing = () => {
 
     // Handle Google Cloud Storage URLs
     if (imageUrl.startsWith('https://storage.googleapis.com/')) {
+      console.log(`Using Google Cloud Storage URL for ${carInfo}: ${imageUrl}`);
       return imageUrl;
     }
 
     // Handle relative and absolute URLs
     if (imageUrl.startsWith('/')) {
+      console.log(`Using relative URL for ${carInfo}: ${imageUrl}`);
       return imageUrl;
     }
 
     // Validate URL format
     try {
       new URL(imageUrl);
+      console.log(`Using absolute URL for ${carInfo}: ${imageUrl}`);
       return imageUrl;
     } catch {
       console.log(`Invalid URL format for ${carInfo}: ${imageUrl}`);
       return null;
     }
+  };
+
+  // Update the ImageWithFallback component
+  const ImageWithFallback = ({ src, alt, ...props }) => {
+    // If no image source or it's the template, don't render the image component
+    if (!src || src === TEMPLATE_IMAGE) {
+      return (
+        <div className="h-full w-full flex items-center justify-center bg-slate-800 text-slate-400 text-sm">
+          <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          No Image
+        </div>
+      );
+    }
+
+    const [imgSrc, setImgSrc] = useState(src);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+      setImgSrc(src);
+      setError(false);
+    }, [src]);
+
+    const handleError = () => {
+      if (!error) {
+        console.error('Image load error:', {
+          src: imgSrc,
+          alt: alt,
+          error: 'Failed to load image'
+        });
+        setError(true);
+        setImgSrc(null);
+      }
+    };
+
+    if (!imgSrc || error) {
+      return (
+        <div className="h-full w-full flex items-center justify-center bg-slate-800 text-slate-400 text-sm">
+          <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          No Image
+        </div>
+      );
+    }
+
+    return (
+      <Image
+        {...props}
+        src={imgSrc}
+        alt={alt}
+        onError={handleError}
+        unoptimized={!imgSrc.startsWith('/')}
+      />
+    );
   };
 
   const handleImageUpload = async (e) => {
@@ -836,13 +852,18 @@ const CarListing = () => {
       }
 
       console.log('Upload successful:', data.url);
-      setCurrentCar(prev => ({
-        ...prev,
-        image: data.url
-      }));
       
-      // Refresh the car list to show the updated image
-      await fetchCars();
+      // Update the current car with the new image URL
+      setCurrentCar(prev => {
+        console.log('Updating current car with new image:', {
+          previous: prev,
+          newImage: data.url
+        });
+        return {
+          ...prev,
+          image: data.url
+        };
+      });
       
       toast.success(data.message || 'Image uploaded successfully');
     } catch (error) {

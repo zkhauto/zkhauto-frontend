@@ -17,19 +17,23 @@ export default function CarDetails() {
   useEffect(() => {
     const fetchCarDetails = async () => {
       try {
+        setLoading(true);
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-        console.log("Fetching car with ID:", id);
+        console.log('Fetching car with ID:', id);
+        
         const response = await fetch(`${backendUrl}/api/cars/${id}`, {
+          method: 'GET',
           headers: {
-            'Accept': 'application/json',
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
+          credentials: 'include',
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Error response:", response.status, errorText);
-          throw new Error(`Failed to fetch car details (Status: ${response.status})`);
+          const errorData = await response.json().catch(() => null);
+          console.error('Error response:', errorData);
+          throw new Error(errorData?.message || 'Failed to fetch car details');
         }
 
         const data = await response.json();
@@ -84,9 +88,10 @@ export default function CarDetails() {
 
         setCar(data);
         setLoading(false);
-      } catch (err) {
-        console.error("Error fetching car details:", err);
-        setError(err.message);
+      } catch (error) {
+        console.error('Error fetching car details:', error);
+        setError(error.message);
+        toast.error('Failed to fetch car details. Please try again later.');
         setLoading(false);
       }
     };
@@ -103,6 +108,55 @@ export default function CarDetails() {
       toast.success("Contact information shown below", {
         duration: 3000,
       });
+    }
+  };
+
+  // Enhanced image source getter with better validation
+  const getImageSrc = (car) => {
+    if (!car.images || !Array.isArray(car.images) || car.images.length === 0) {
+      console.log('No images array found for car:', car.brand, car.model);
+      return null;
+    }
+
+    // Find the first valid image
+    const validImage = car.images.find(img => img && img.exists && img.url);
+    if (!validImage) {
+      console.log('No valid image found for car:', car.brand, car.model);
+      return null;
+    }
+
+    const imageUrl = validImage.url;
+
+    // Return null for any invalid or missing image URL
+    if (!imageUrl || 
+        imageUrl.trim() === "" || 
+        imageUrl === "/placeholder.svg" || 
+        imageUrl.includes('undefined') ||
+        imageUrl === "null") {
+      console.log('Invalid image URL for car:', car.brand, car.model);
+      return null;
+    }
+
+    // Handle Google Cloud Storage URLs
+    if (imageUrl.startsWith('https://storage.googleapis.com/')) {
+      console.log('Using Google Cloud Storage URL:', imageUrl);
+      return imageUrl;
+    }
+
+    // Handle relative and absolute URLs
+    if (imageUrl.startsWith('/')) {
+      console.log('Using relative URL:', imageUrl);
+      return imageUrl;
+    }
+
+    // Validate URL format
+    try {
+      new URL(imageUrl);
+      console.log('Using absolute URL:', imageUrl);
+      return imageUrl;
+    } catch {
+      console.log('Invalid URL format:', imageUrl);
+      return null;
     }
   };
 
@@ -157,9 +211,9 @@ export default function CarDetails() {
                   src={car.images[0].url}
                   alt={`${car.brand} ${car.model}`}
                   fill
-                  className="object-contain"
+                  className="object-contain object-center w-full h-full"
                   priority={true}
-                  quality={100}
+                  quality={90}
                   onError={(e) => {
                     console.error('Image load error for:', {
                       brand: car.brand,
@@ -181,6 +235,7 @@ export default function CarDetails() {
                           <p class="text-sm mt-1">${car.images[0].url}</p>
                         </div>
                       `;
+                      parent.appendChild(div);
                     }
                   }}
                   unoptimized={true}
