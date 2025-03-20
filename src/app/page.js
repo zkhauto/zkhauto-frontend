@@ -1,11 +1,9 @@
-import Hero from "../app/ui/Hero";
-import LatestModel from "./ui/LatestModel";
+import Hero from "./ui/Hero";
 
 const Home = () => {
   return (
     <div>
       <Hero />
-      <LatestModel />
     </div>
   );
 };
