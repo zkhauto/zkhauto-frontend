@@ -144,8 +144,8 @@ export default function UserProfileEdit() {
             <div className="relative">
               <Avatar className="h-24 w-24 border-4 border-slate-800 overflow-hidden">
                 <AvatarImage
-                  src={user.profilePhoto || "/img/user_img.png"}
-                  alt="Profile"
+                  src={user?.profilePhoto || "/img/user_img.png"}
+                  alt={`${user?.firstName || "User"}'s profile`}
                   className="aspect-square w-full h-full object-cover"
                   style={{ objectFit: "cover" }}
                 />
