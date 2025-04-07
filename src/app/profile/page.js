@@ -14,9 +14,10 @@ import {
   Save,
   Star,
   Trash2,
+  Camera,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../ui/Navbar";
@@ -37,6 +38,8 @@ export default function UserProfileEdit() {
   const [newPassword, setNewPassword] = useState("");
   const [passwordError, setPasswordError] = useState(null);
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -113,6 +116,43 @@ export default function UserProfileEdit() {
     }
   };
 
+  const handleImageUpload = async (e) => {
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      setIsUploading(true);
+
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("email", user.email);
+
+      // Make sure this URL matches your backend URL from your environment variables
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + "/users/update-profile-photo",
+        {
+          method: "PUT",
+          body: formData,
+          credentials: "include", // Include cookies if you're using session-based auth
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to upload image");
+      }
+
+      const data = await response.json();
+      setUser((prev) => ({ ...prev, profilePhoto: data.profilePhoto }));
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      // Add more detailed error feedback
+      alert(error.message || "Error uploading image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-slate-950">
@@ -142,7 +182,7 @@ export default function UserProfileEdit() {
           {/* Profile Header */}
           <div className="mb-8 flex items-center">
             <div className="relative">
-              <Avatar className="h-24 w-24 border-4 border-slate-800 overflow-hidden">
+              <Avatar className="h-24 w-24 border-4 border-slate-800 overflow-hidden group">
                 <AvatarImage
                   src={user?.profilePhoto || "/img/user_img.png"}
                   alt={`${user?.firstName || "User"}'s profile`}
@@ -153,13 +193,37 @@ export default function UserProfileEdit() {
                   {user.firstName?.[0]}
                   {user.lastName?.[0]}
                 </AvatarFallback>
+
+                {/* Add edit button overlay */}
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/20"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    <Camera className="h-5 w-5" />
+                    <span className="sr-only">Change profile picture</span>
+                  </Button>
+                </div>
               </Avatar>
-              <Button
-                size="icon"
-                className="absolute bottom-0 right-0 rounded-full bg-blue-600 hover:bg-blue-500 w-8 h-8 flex items-center justify-center"
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
+
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={isUploading}
+              />
+
+              {isUploading && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                  <div className="text-white text-sm">Uploading...</div>
+                </div>
+              )}
             </div>
             <div className="ml-6 flex flex-col justify-center">
               <div className="flex items-center gap-4">

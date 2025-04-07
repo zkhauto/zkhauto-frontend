@@ -65,143 +65,51 @@ const AddCarPage = () => {
     }));
   };
 
-  const compressImage = (file) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const MAX_WIDTH = 600;
-          const MAX_HEIGHT = 400;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.4);
-          resolve(compressedBase64);
-        };
-      };
-    });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      const imageFiles = Array.from(e.target.images.files).slice(0, 3);
-      let images = [];
+    const formDataToSend = new FormData();
 
-      if (imageFiles.length > 0) {
-        for (const file of imageFiles) {
-          if (file.size > 5 * 1024 * 1024) {
-            continue;
-          }
-          try {
-            const compressedImage = await compressImage(file);
-            images.push(compressedImage);
-          } catch (error) {
-            console.error("Error processing image:", error);
-          }
-        }
-      }
-
-      if (images.length === 0) {
-        images = ["url_to_exterior2.jpg", "url_to_interior2.jpg"];
-      }
-
-      const carData = {
-        brand: formData.brand.trim(),
-        model: formData.model.trim(),
-        year: parseInt(formData.year),
-        price: parseFloat(formData.price),
-        type: formData.type,
-        fuel: formData.fuel,
-        mileage: parseInt(formData.mileage),
-        status: formData.status || "available",
-        color: formData.color.trim(),
-        engineSize: formData.engineSize.trim(),
-        engineCylinders: parseInt(formData.engineCylinders),
-        engineHorsepower: parseInt(formData.engineHorsepower),
-        engineTransmission: formData.engineTransmission,
-        features: formData.features,
-        driveTrain: formData.driveTrain,
-        description: formData.description.trim(),
-        condition: formData.condition || "Used",
-        rating: parseFloat(formData.rating),
-        images: images,
-      };
-
-      if (JSON.stringify(carData).length > 1024 * 1024) {
-        const { images: _, ...carDataWithoutImages } = carData;
-        const initialResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/cars`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              ...carDataWithoutImages,
-              images: ["url_to_exterior2.jpg", "url_to_interior2.jpg"],
-            }),
-          }
-        );
-
-        if (!initialResponse.ok) {
-          throw new Error("Failed to create initial car record");
-        }
-
-        const savedCar = await initialResponse.json();
-
-        const updateResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/cars/${savedCar._id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ images }),
-          }
-        );
-
-        if (!updateResponse.ok) {
-          throw new Error("Failed to update car images");
-        }
+    // Append text fields
+    Object.keys(formData).forEach((key) => {
+      // Handle features array specifically
+      if (key === "features") {
+        // Sending features as a JSON string is common with FormData
+        formDataToSend.append(key, JSON.stringify(formData[key]));
       } else {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/cars`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(carData),
-          }
-        );
+        formDataToSend.append(key, formData[key]);
+      }
+    });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to add car");
+    // Append image files (up to 3)
+    const imageFiles = Array.from(e.target.images.files).slice(0, 3);
+    if (imageFiles.length > 0) {
+      imageFiles.forEach((file) => {
+        // Append each file with the same key 'images'
+        formDataToSend.append("images", file, file.name);
+      });
+    } else {
+      // If no images, backend will handle default
+      // Optionally, append default image flags/values if needed by backend logic
+      // formDataToSend.append('images', JSON.stringify(["url_to_exterior2.jpg", "url_to_interior2.jpg"]));
+    }
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/cars`,
+        {
+          method: "POST",
+          // Don't set Content-Type header; browser will set it with boundary for FormData
+          body: formDataToSend,
+          // Add credentials if needed, e.g., credentials: 'include',
         }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to add car");
       }
 
       toast({
