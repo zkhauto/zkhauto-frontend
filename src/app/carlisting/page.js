@@ -23,9 +23,19 @@ import {
   MapPin,
   Search,
   SlidersHorizontal,
+  Mail,
+  Phone,
 } from "lucide-react";
 import Navbar from "../ui/Navbar";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function CarListingPage() {
   const [mounted, setMounted] = useState(false);
@@ -33,6 +43,25 @@ export default function CarListingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cars, setCars] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredCars, setFilteredCars] = useState([]);
+  const [selectedMake, setSelectedMake] = useState("any");
+  const [availableMakes, setAvailableMakes] = useState([]);
+  
+  // Advanced filter states
+  const [priceRange, setPriceRange] = useState([0, 1000000]);
+  const [yearRange, setYearRange] = useState([2000, 2030]);
+  const [mileageRange, setMileageRange] = useState([0, 500000]);
+  
+  // Contact seller dialog state
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [selectedCar, setSelectedCar] = useState(null);
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
 
   // Fetch cars from the backend
   const fetchCars = async () => {
@@ -55,6 +84,11 @@ export default function CarListingPage() {
 
       const data = await response.json();
       console.log(`Successfully fetched ${data.length} cars`);
+      
+      // Extract unique car makes for the filter dropdown
+      const makes = [...new Set(data.map(car => car.brand?.toLowerCase() || ''))].filter(Boolean);
+      setAvailableMakes(makes);
+      
       return data;
     } catch (error) {
       console.error("Error fetching cars:", error);
@@ -68,6 +102,7 @@ export default function CarListingPage() {
       try {
         const cars = await fetchCars();
         setCars(cars);
+        setFilteredCars(cars);
         console.log("Fetched cars:", cars);
       } catch (error) {
         console.error("Failed to load cars:", error);
@@ -80,6 +115,158 @@ export default function CarListingPage() {
     setMounted(true);
     loadCars();
   }, []);
+
+  // Filter cars based on search term, selected make, and advanced filters
+  useEffect(() => {
+    let filtered = [...cars];
+    
+    // Apply search term filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter((car) => {
+        return (
+          (car.brand?.toLowerCase() || '').includes(term) ||
+          (car.model?.toLowerCase() || '').includes(term) ||
+          (car.year?.toString() || '').includes(term) ||
+          (car.price?.toString() || '').includes(term) ||
+          (car.status?.toLowerCase() || '').includes(term)
+        );
+      });
+    }
+    
+    // Apply make filter
+    if (selectedMake !== "any") {
+      filtered = filtered.filter((car) => 
+        (car.brand?.toLowerCase() || '') === selectedMake.toLowerCase()
+      );
+    }
+    
+    // Apply advanced filters if they're visible
+    if (showAdvanced) {
+      // Price range filter
+      filtered = filtered.filter((car) => {
+        const price = Number(car.price) || 0;
+        return price >= priceRange[0] && price <= priceRange[1];
+      });
+      
+      // Year range filter
+      filtered = filtered.filter((car) => {
+        const year = Number(car.year) || 0;
+        return year >= yearRange[0] && year <= yearRange[1];
+      });
+      
+      // Mileage range filter
+      filtered = filtered.filter((car) => {
+        const mileage = Number(car.mileage) || 0;
+        return mileage >= mileageRange[0] && mileage <= mileageRange[1];
+      });
+    }
+
+    console.log(`Filtered ${filtered.length} cars for search term: ${searchTerm}, make: ${selectedMake}`);
+    setFilteredCars(filtered);
+  }, [searchTerm, cars, selectedMake, showAdvanced, priceRange, yearRange, mileageRange]);
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Handle make selection change
+  const handleMakeChange = (value) => {
+    setSelectedMake(value);
+  };
+  
+  // Handle price range change
+  const handlePriceRangeChange = (value) => {
+    setPriceRange(value);
+  };
+  
+  // Handle year range change
+  const handleYearRangeChange = (value) => {
+    setYearRange(value);
+  };
+  
+  // Handle mileage range change
+  const handleMileageRangeChange = (value) => {
+    // Ensure the value is within bounds and properly formatted
+    const minValue = Math.max(0, value[0]);
+    const maxValue = Math.min(500000, value[1]);
+    
+    // Only update if values are valid
+    if (!isNaN(minValue) && !isNaN(maxValue) && minValue <= maxValue) {
+      setMileageRange([minValue, maxValue]);
+    }
+  };
+  
+  // Reset all filters
+  const resetFilters = () => {
+    setSearchTerm("");
+    setSelectedMake("any");
+    setPriceRange([0, 1000000]);
+    setYearRange([2000, 2030]);
+    setMileageRange([0, 500000]);
+  };
+
+  // Handle contact seller button click
+  const handleContactSeller = (car) => {
+    setSelectedCar(car);
+    setContactDialogOpen(true);
+  };
+  
+  // Handle contact form input change
+  const handleContactFormChange = (e) => {
+    const { name, value } = e.target;
+    setContactForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Handle contact form submission
+  const handleContactFormSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      // Prepare the message data
+      const messageData = {
+        fullName: contactForm.name,
+        email: contactForm.email,
+        phone: contactForm.phone || "",
+        carModel: selectedCar ? `${selectedCar.brand} ${selectedCar.model}` : "",
+        topic: "Car Inquiry",
+        message: contactForm.message
+      };
+      
+      // Send the message to the backend
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+      const response = await fetch(`${backendUrl}/api/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(messageData),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+      
+      // Show success message
+      alert("Your message has been sent to the seller. They will contact you soon!");
+      
+      // Reset form and close dialog
+      setContactForm({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
+      setContactDialogOpen(false);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      alert("Failed to send message. Please try again later.");
+    }
+  };
 
   // Don't render anything until mounted
   if (!mounted) {
@@ -114,27 +301,31 @@ export default function CarListingPage() {
                       <Input
                         id="search"
                         placeholder="Search by make, model, or keyword"
-                        className="pl-8"
+                        className="pl-8 text-white placeholder:text-slate-400"
+                        value={searchTerm}
+                        onChange={handleSearchChange}
                       />
                     </div>
                   </div>
                   <div>
-                    <Select>
+                    <Select value={selectedMake} onValueChange={handleMakeChange}>
                       <SelectTrigger>
                         <SelectValue placeholder="Any Make" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="any">Any Make</SelectItem>
-                        <SelectItem value="audi">Audi</SelectItem>
-                        <SelectItem value="bmw">BMW</SelectItem>
-                        <SelectItem value="mercedes">Mercedes</SelectItem>
+                        {availableMakes.map((make) => (
+                          <SelectItem key={make} value={make}>
+                            {make.charAt(0).toUpperCase() + make.slice(1)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                  </div>
+              </div>
                   <div>
                     <Button className="w-full">Search</Button>
-                  </div>
-                </div>
+            </div>
+            </div>
 
                 <div className="flex items-center justify-between">
                   <Button
@@ -149,11 +340,12 @@ export default function CarListingPage() {
                     <Button
                       variant="link"
                       className="p-0 h-auto font-normal text-slate-400"
+                      onClick={resetFilters}
                     >
                       Reset Filters
                     </Button>
-                  )}
-                </div>
+            )}
+          </div>
 
                 {showAdvanced && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
@@ -161,45 +353,50 @@ export default function CarListingPage() {
                       <Label className="text-slate-400">Price Range</Label>
                       <div className="pt-2">
                         <Slider
-                          defaultValue={[0, 75000]}
-                          max={100000}
-                          step={1000}
+                          value={priceRange}
+                          onValueChange={handlePriceRangeChange}
+                          max={1000000}
+                          step={10000}
                         />
                       </div>
                       <div className="flex items-center justify-between text-sm text-slate-400">
-                        <span>$0</span>
-                        <span>$100,000+</span>
+                        <span>${priceRange[0].toLocaleString()}</span>
+                        <span>${priceRange[1].toLocaleString()}</span>
                       </div>
-                    </div>
+          </div>
 
                     <div className="space-y-2">
                       <Label className="text-slate-400">Year</Label>
                       <div className="pt-2">
                         <Slider
-                          defaultValue={[2015, 2024]}
+                          value={yearRange}
+                          onValueChange={handleYearRangeChange}
                           min={2000}
-                          max={2024}
+                          max={2030}
                           step={1}
                         />
                       </div>
                       <div className="flex items-center justify-between text-sm text-slate-400">
-                        <span>2000</span>
-                        <span>2024</span>
-                      </div>
-                    </div>
+                        <span>{yearRange[0]}</span>
+                        <span>{yearRange[1]}</span>
+                  </div>
+                </div>
 
                     <div className="space-y-2">
                       <Label className="text-slate-400">Mileage</Label>
                       <div className="pt-2">
                         <Slider
-                          defaultValue={[0, 75000]}
-                          max={200000}
-                          step={5000}
+                          value={mileageRange}
+                          onValueChange={handleMileageRangeChange}
+                          max={500000}
+                          step={10000}
+                          min={0}
+                          minStepsBetweenThumbs={1}
                         />
                       </div>
                       <div className="flex items-center justify-between text-sm text-slate-400">
-                        <span>0 mi</span>
-                        <span>200,000+ mi</span>
+                        <span>{mileageRange[0].toLocaleString()} mi</span>
+                        <span>{mileageRange[1].toLocaleString()}+ mi</span>
                       </div>
                     </div>
                   </div>
@@ -233,12 +430,12 @@ export default function CarListingPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+                  </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {cars.map((car) => (
+              {filteredCars.map((car) => (
                 <Card
-                  key={car.id}
+                  key={car._id}
                   className="overflow-hidden bg-slate-900/50 border-slate-800"
                 >
                   <div className="relative">
@@ -284,21 +481,25 @@ export default function CarListingPage() {
                           <span className="text-xs text-slate-400">
                             {car.year}
                           </span>
-                        </div>
+                    </div>
                         <div className="flex flex-col items-center p-2 bg-slate-800 rounded-md">
                           <Fuel className="h-4 w-4 mb-1 text-slate-400" />
                           <span className="text-xs text-slate-400">
                             {car.fuel}
                           </span>
-                        </div>
-                      </div>
-                    </div>
+                  </div>
+                </div>
+              </div>
                   </CardContent>
                   <CardFooter className="p-4 pt-0 flex gap-2">
                     <Button className="w-full" asChild>
                       <Link href={`/cars/${car._id}`}>View Details</Link>
                     </Button>
-                    <Button variant="outline" className="w-full">
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => handleContactSeller(car)}
+                    >
                       Contact Seller
                     </Button>
                   </CardFooter>
@@ -317,6 +518,75 @@ export default function CarListingPage() {
           </div>
         </div>
       </main>
-    </div>
+      
+      {/* Contact Seller Dialog */}
+      <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
+        <DialogContent className="bg-slate-900 text-white border-slate-800">
+          <DialogHeader>
+            <DialogTitle>Contact Seller</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Send a message to the seller of this {selectedCar?.brand} {selectedCar?.model}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleContactFormSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-slate-300">Your Name</Label>
+              <Input
+                id="name"
+                name="name"
+                value={contactForm.name}
+                onChange={handleContactFormChange}
+                className="bg-slate-800 border-slate-700 text-white"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-slate-300">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={contactForm.email}
+                onChange={handleContactFormChange}
+                className="bg-slate-800 border-slate-700 text-white"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-slate-300">Phone (optional)</Label>
+              <Input
+                id="phone"
+                name="phone"
+                value={contactForm.phone}
+                onChange={handleContactFormChange}
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="message" className="text-slate-300">Message</Label>
+              <textarea
+                id="message"
+                name="message"
+                value={contactForm.message}
+                onChange={handleContactFormChange}
+                className="w-full min-h-[100px] p-2 rounded-md bg-slate-800 border border-slate-700 text-white"
+                placeholder="I'm interested in this car. Is it still available?"
+                required
+              />
+            </div>
+            
+            <DialogFooter>
+              <Button type="submit" className="w-full">
+                Send Message
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      </div>
   );
 }
