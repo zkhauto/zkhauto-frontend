@@ -2,9 +2,9 @@ name: Lint and Checks
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   lint:
@@ -22,6 +22,7 @@ jobs:
 
     - name: Check for lockfile sync
       run: |
+        echo "Checking if package-lock.json is in sync with package.json..."
         npm install --package-lock-only --legacy-peer-deps
         git diff --exit-code package-lock.json || {
           echo "::error::package-lock.json is out of sync with package.json. Run 'npm install' locally and commit changes.";
@@ -34,10 +35,10 @@ jobs:
     - name: Run ESLint
       run: npm run lint
 
-    - name: Run TypeScript type checks
+    - name: Run TypeScript checks
       run: npm run typecheck
-      continue-on-error: true  # optional: don't fail build if you just want a warning
+      continue-on-error: true  # set to false if you want to block on type errors
 
-    - name: Run npm audit for vulnerabilities
+    - name: Audit for vulnerabilities
       run: npm audit --audit-level=moderate
-      continue-on-error: true  # avoid failing for low-level issues
+      continue-on-error: true  # prevent minor issues from failing the CI
