@@ -1,4 +1,4 @@
-name: Lint
+name: Lint and Checks
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
 
     - name: Check for lockfile sync
       run: |
-        npm install --package-lock-only
+        npm install --package-lock-only --legacy-peer-deps
         git diff --exit-code package-lock.json || {
           echo "::error::package-lock.json is out of sync with package.json. Run 'npm install' locally and commit changes.";
           exit 1;
@@ -33,3 +33,11 @@ jobs:
 
     - name: Run ESLint
       run: npm run lint
+
+    - name: Run TypeScript type checks
+      run: npm run typecheck
+      continue-on-error: true  # optional: don't fail build if you just want a warning
+
+    - name: Run npm audit for vulnerabilities
+      run: npm audit --audit-level=moderate
+      continue-on-error: true  # avoid failing for low-level issues
