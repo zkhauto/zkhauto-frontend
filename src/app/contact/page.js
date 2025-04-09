@@ -268,7 +268,9 @@ const ContactUs = () => {
                         <Input
                           id="fullName"
                           name="fullName"
-                          value={`${user?.firstName} ${user?.lastName}`}
+                          value={`${
+                            user ? user?.firstName + " " + user?.lastName : ""
+                          }`}
                           readOnly
                           className="border-gray-200 focus-visible:ring-gray-500"
                         />
