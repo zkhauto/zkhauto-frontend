@@ -231,8 +231,8 @@ const CarListingPage = () => {
                     Showing{" "}
                     <span className="font-medium text-white">
                       {startIndex + 1}
-                    </span>{" "}
-                    to{" "}
+                    </span>
+                    to
                     <span className="font-medium text-white">
                       {Math.min(endIndex, totalCars)}
                     </span>{" "}
