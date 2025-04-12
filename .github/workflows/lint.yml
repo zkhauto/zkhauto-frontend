@@ -1,0 +1,44 @@
+name: Lint and Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Check for lockfile sync
+      run: |
+        echo "Checking if package-lock.json is in sync with package.json..."
+        npm install --package-lock-only --legacy-peer-deps
+        git diff --exit-code package-lock.json || {
+          echo "::error::package-lock.json is out of sync with package.json. Run 'npm install' locally and commit changes.";
+          exit 1;
+        }
+
+    - name: Install dependencies
+      run: npm install --legacy-peer-deps
+
+    - name: Run ESLint
+      run: npm run lint
+
+    - name: Run TypeScript checks
+      run: npm run typecheck
+      continue-on-error: true  # set to false if you want to block on type errors
+
+    - name: Audit for vulnerabilities
+      run: npm audit --audit-level=moderate
+      continue-on-error: true  # prevent minor issues from failing the CI

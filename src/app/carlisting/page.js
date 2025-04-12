@@ -23,6 +23,8 @@ import {
   MapPin,
   Search,
   SlidersHorizontal,
+  Mail,
+  Phone,
 } from "lucide-react";
 import Navbar from "../ui/Navbar";
 import Link from "next/link";
@@ -79,6 +81,11 @@ export default function CarListingPage() {
 
       const data = await response.json();
       console.log(`Successfully fetched ${data.length} cars`);
+      
+      // Extract unique car makes for the filter dropdown
+      const makes = [...new Set(data.map(car => car.brand?.toLowerCase() || ''))].filter(Boolean);
+      setAvailableMakes(makes);
+      
       return data;
     } catch (error) {
       console.error("Error fetching cars:", error);
@@ -302,8 +309,8 @@ export default function CarListingPage() {
                     >
                       Reset Filters
                     </Button>
-                  )}
-                </div>
+            )}
+          </div>
 
                 {/* Advanced Filters */}
                 {showAdvanced && (
@@ -423,7 +430,7 @@ export default function CarListingPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+                  </div>
 
             {/* Conditional Rendering for Loading, Error, No Results */}
             {loading && (
@@ -574,6 +581,75 @@ export default function CarListingPage() {
           </div>
         </div>
       </main>
-    </div>
+      
+      {/* Contact Seller Dialog */}
+      <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
+        <DialogContent className="bg-slate-900 text-white border-slate-800">
+          <DialogHeader>
+            <DialogTitle>Contact Seller</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Send a message to the seller of this {selectedCar?.brand} {selectedCar?.model}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleContactFormSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-slate-300">Your Name</Label>
+              <Input
+                id="name"
+                name="name"
+                value={contactForm.name}
+                onChange={handleContactFormChange}
+                className="bg-slate-800 border-slate-700 text-white"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-slate-300">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={contactForm.email}
+                onChange={handleContactFormChange}
+                className="bg-slate-800 border-slate-700 text-white"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-slate-300">Phone (optional)</Label>
+              <Input
+                id="phone"
+                name="phone"
+                value={contactForm.phone}
+                onChange={handleContactFormChange}
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="message" className="text-slate-300">Message</Label>
+              <textarea
+                id="message"
+                name="message"
+                value={contactForm.message}
+                onChange={handleContactFormChange}
+                className="w-full min-h-[100px] p-2 rounded-md bg-slate-800 border border-slate-700 text-white"
+                placeholder="I'm interested in this car. Is it still available?"
+                required
+              />
+            </div>
+            
+            <DialogFooter>
+              <Button type="submit" className="w-full">
+                Send Message
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      </div>
   );
 }
