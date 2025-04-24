@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, Car, Home, Info, Phone } from 'lucide-react';
+import { Menu, X, Car, Home, Info, Phone, MessageSquare } from 'lucide-react';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,6 +17,7 @@ const Navbar = () => {
     { href: "/carlisting", label: "Car Listings", icon: <Car className="w-5 h-5 mr-2" /> },
     { href: "/about", label: "About", icon: <Info className="w-5 h-5 mr-2" /> },
     { href: "/contact", label: "Contact", icon: <Phone className="w-5 h-5 mr-2" /> },
+    { href: "/chatlogs", label: "Chat History", icon: <MessageSquare className="w-5 h-5 mr-2" /> },
   ];
 
   return (

@@ -29,7 +29,7 @@ export default function ChatWidget() {
     setInput("");
 
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, { message: input });
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/chat`, { message: input });
       const botMsg = { sender: "bot", text: res.data.reply };
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {

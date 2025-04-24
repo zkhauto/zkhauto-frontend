@@ -70,6 +70,8 @@ export default function CarListingPage() {
   const [yearRange, setYearRange] = useState([2000, 2024]);
   const [mileageRange, setMileageRange] = useState([0, 200000]);
   const [sortOrder, setSortOrder] = useState("newest");
+  const [smartSearchQuery, setSmartSearchQuery] = useState('');
+  const [isSmartSearching, setIsSmartSearching] = useState(false);
 
   // New state variables for advanced filters
   const [selectedModel, setSelectedModel] = useState("any");
@@ -388,6 +390,34 @@ export default function CarListingPage() {
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Failed to send message. Please try again.');
+    }
+  };
+
+  // Add smart search handler
+  const handleSmartSearch = async (query) => {
+    try {
+      setIsSmartSearching(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/smart-search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setCars(data.cars);
+        toast.success(`Found ${data.count} cars matching your search`);
+      } else {
+        toast.error('Failed to process search query');
+      }
+    } catch (error) {
+      console.error('Smart search error:', error);
+      toast.error('Error processing search query');
+    } finally {
+      setIsSmartSearching(false);
     }
   };
 
@@ -1073,6 +1103,6 @@ export default function CarListingPage() {
 
       {/* Chat Widget */}
       <ChatWidget />
-    </div>
+      </div>
   );
 }
