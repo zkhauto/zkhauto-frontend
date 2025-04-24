@@ -258,13 +258,13 @@ const CarListingPage = () => {
                   Delete Selected ({selectedCars.length})
                 </Button>
               )}
-              <Button
+            <Button
                 className="bg-blue-600 hover:bg-blue-500"
                 onClick={() => router.push("/dashboard/carlisting/add")}
-              >
+            >
                 <Plus className="h-4 w-4 mr-2" />
                 Add New Car
-              </Button>
+            </Button>
             </div>
           </div>
 
@@ -326,37 +326,37 @@ const CarListingPage = () => {
                           className="border-gray-600 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                         />
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
+                    <TableCell>
+                      <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0 mr-4">
-                            <Image
+                          <Image
                               className="h-10 w-10 rounded-lg object-cover"
                               src={
                                 car.images?.[0] || "/img/car-placeholder.jpg"
                               }
                               alt={`${car.brand} ${car.model}`}
                               width={40}
-                              height={40}
+                            height={40}
                               priority
-                            />
-                          </div>
-                          <div>
-                            <div className="font-medium text-white">
+                          />
+                        </div>
+                        <div>
+                          <div className="font-medium text-white">
                               {car.brand} {car.model}
-                            </div>
+                          </div>
                             <div className="text-sm text-white">
-                              {car.year}
-                            </div>
+                            {car.year}
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                         <div className="text-white">
                           ${car.price.toLocaleString()}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
                           variant="secondary"
                           className={`
                             ${
@@ -371,7 +371,7 @@ const CarListingPage = () => {
                             }
                             ${
                               car.status === "reserved"
-                                ? "bg-yellow-500/10 text-yellow-500"
+                            ? "bg-yellow-500/10 text-yellow-500"
                                 : ""
                             }
                             ${
@@ -383,39 +383,39 @@ const CarListingPage = () => {
                         >
                           {car.status.charAt(0).toUpperCase() +
                             car.status.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
                         <div className="text-sm text-white">
                           {new Date(car.createdAt).toLocaleDateString()}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                      <Button
+                        variant="ghost"
+                        size="icon"
                             onClick={() => handleEdit(car)}
                             className="text-white hover:text-white hover:bg-gray-800"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                             onClick={() => handleDelete(car)}
                             className="text-red-500 hover:text-red-400 hover:bg-gray-800"
                             disabled={isDeleting && carToDelete === car._id}
-                          >
+                      >
                             {isDeleting && carToDelete === car._id ? (
                               <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
                             ) : (
-                              <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                             )}
-                          </Button>
+                      </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                    </TableCell>
+                  </TableRow>
                   ))
                 )}
               </TableBody>
@@ -453,10 +453,10 @@ const CarListingPage = () => {
                     </Button>
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                       (page) => (
-                        <Button
+                    <Button
                           key={page}
-                          variant="outline"
-                          size="sm"
+                      variant="outline"
+                      size="sm"
                           onClick={() => setCurrentPage(page)}
                           className={`border-gray-700 ${
                             currentPage === page
@@ -465,7 +465,7 @@ const CarListingPage = () => {
                           }`}
                         >
                           {page}
-                        </Button>
+                    </Button>
                       )
                     )}
                     <Button
