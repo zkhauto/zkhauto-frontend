@@ -268,10 +268,10 @@ const ContactUs = () => {
                         <Input
                           id="fullName"
                           name="fullName"
-                          value={`${
+                          defaultValue={`${
                             user ? user?.firstName + " " + user?.lastName : ""
                           }`}
-                          readOnly
+                          readOnly={!!user}
                           className="border-gray-200 focus-visible:ring-gray-500"
                         />
                       </div>
