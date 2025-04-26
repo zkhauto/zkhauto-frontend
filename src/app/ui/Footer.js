@@ -1,7 +1,34 @@
+"use client";
+
 import Link from "next/link";
 import { Facebook, Hash, Twitter, Youtube } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const Footer = () => {
+  const [footerData, setFooterData] = useState({
+    companyName: "Car Selling",
+    socialLinks: {
+      twitter: "#",
+      youtube: "#",
+      facebook: "#"
+    }
+  });
+
+  useEffect(() => {
+    const fetchFooterData = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/footer`);
+        if (!response.ok) throw new Error('Failed to fetch footer data');
+        const data = await response.json();
+        setFooterData(data);
+      } catch (error) {
+        console.error('Error fetching footer data:', error);
+      }
+    };
+
+    fetchFooterData();
+  }, []);
+
   return (
     <div className="bg-gray-900 border-t border-gray-800 text-gray-200">
       {/* Bottom footer with logo and social links */}
@@ -10,22 +37,20 @@ const Footer = () => {
           <div className="flex items-center gap-2">
             <Hash className="h-6 w-6 text-primary" />
             <p className="text-sm">
-              Car Selling
-              <br />
-              1232 Sunset Blvd
+              {footerData.companyName}
             </p>
           </div>
 
           <div className="flex gap-4">
-            <Link href="#" className="hover:text-primary">
+            <Link href={footerData.socialLinks.twitter} className="hover:text-primary">
               <Twitter className="h-5 w-5" />
               <span className="sr-only">Twitter</span>
             </Link>
-            <Link href="#" className="hover:text-primary">
+            <Link href={footerData.socialLinks.youtube} className="hover:text-primary">
               <Youtube className="h-5 w-5" />
               <span className="sr-only">YouTube</span>
             </Link>
-            <Link href="#" className="hover:text-primary">
+            <Link href={footerData.socialLinks.facebook} className="hover:text-primary">
               <Facebook className="h-5 w-5" />
               <span className="sr-only">Facebook</span>
             </Link>

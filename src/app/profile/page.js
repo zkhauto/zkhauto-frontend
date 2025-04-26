@@ -41,6 +41,98 @@ export default function UserProfileEdit() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Add state for form fields
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    displayName: "",
+    email: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+    language: "",
+    carPreferences: {
+      make: "",
+      model: "",
+      type: "",
+      steering: "",
+      year: "",
+      priceRange: "",
+      mileage: "",
+      location: ""
+    }
+  });
+
+  // Initialize form data when user data is available
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        displayName: user.displayName || "",
+        email: user.email || "",
+        phoneNumber: user.phoneNumber || "",
+        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
+        language: user.language || "English",
+        carPreferences: {
+          make: user.carPreferences?.make || "",
+          model: user.carPreferences?.model || "",
+          type: user.carPreferences?.type || "",
+          steering: user.carPreferences?.steering || "",
+          year: user.carPreferences?.year?.toString() || "",
+          priceRange: user.carPreferences?.priceRange || "",
+          mileage: user.carPreferences?.mileage || "",
+          location: user.carPreferences?.location || ""
+        }
+      });
+    }
+  }, [user]);
+
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name.startsWith('carPreferences.')) {
+      const field = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        carPreferences: {
+          ...prev.carPreferences,
+          [field]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  // Handle save changes
+  const handleSaveChanges = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update profile');
+      }
+
+      const data = await response.json();
+      setUser(data.user);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error(error.message || 'Error updating profile');
+    }
+  };
+
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
@@ -66,6 +158,33 @@ export default function UserProfileEdit() {
       }
     } catch (error) {
       console.error("Logout error:", error);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/delete`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ email: user.email })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to delete account');
+        }
+
+        setUser(null);
+        router.push('/');
+        toast.success('Account deleted successfully');
+      } catch (error) {
+        console.error('Error deleting account:', error);
+        toast.error(error.message || 'Error deleting account');
+      }
     }
   };
 
@@ -231,50 +350,7 @@ export default function UserProfileEdit() {
                   {user.displayName || `${user.firstName} ${user.lastName}`}
                 </h2>
               </div>
-              <div className="mt-1 flex items-center text-slate-400">
-                <MapPin className="mr-1 h-4 w-4" />
-                San Francisco, CA
-              </div>
             </div>
-          </div>
-
-          {/* Stats Overview */}
-          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card className="bg-slate-900/50 border-slate-800">
-              <CardContent className="flex items-center p-4">
-                <div className="rounded-full bg-blue-500/10 p-3">
-                  <Package className="h-6 w-6 text-blue-500" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-white">156</p>
-                  <p className="text-sm text-slate-400">Cars Listed</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-900/50 border-slate-800">
-              <CardContent className="flex items-center p-4">
-                <div className="rounded-full bg-emerald-500/10 p-3">
-                  <Car className="h-6 w-6 text-emerald-500" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-white">89</p>
-                  <p className="text-sm text-slate-400">Cars Sold</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-900/50 border-slate-800">
-              <CardContent className="flex items-center p-4">
-                <div className="rounded-full bg-yellow-500/10 p-3">
-                  <Star className="h-6 w-6 text-yellow-500" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-white">4.9</p>
-                  <p className="text-sm text-slate-400">Rating</p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Main Settings Content */}
@@ -287,6 +363,7 @@ export default function UserProfileEdit() {
                 </h3>
                 <Button
                   variant="outline"
+                  onClick={handleSaveChanges}
                   className="border-green-600 text-green-500 hover:bg-green-500/10 hover:text-white"
                 >
                   <Save className="h-4 w-4 mr-2" />
@@ -296,50 +373,66 @@ export default function UserProfileEdit() {
               <CardContent className="p-6">
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-400">Full Name</label>
+                    <label className="text-sm text-slate-400">First Name</label>
                     <Input
-                      defaultValue={`${user.firstName} ${user.lastName}`}
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-400">
-                      Display Name
-                    </label>
+                    <label className="text-sm text-slate-400">Last Name</label>
                     <Input
-                      defaultValue={user.displayName}
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      className="border-slate-800 bg-slate-900/50 text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-slate-400">Display Name</label>
+                    <Input
+                      name="displayName"
+                      value={formData.displayName}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Email</label>
                     <Input
-                      defaultValue={user.email}
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-400">
-                      Phone Number
-                    </label>
+                    <label className="text-sm text-slate-400">Phone Number</label>
                     <Input
-                      defaultValue="+1 (555) 123-4567"
+                      name="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-400">
-                      Date of Birth
-                    </label>
+                    <label className="text-sm text-slate-400">Date of Birth</label>
                     <Input
+                      name="dateOfBirth"
                       type="date"
+                      value={formData.dateOfBirth}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Language</label>
                     <Input
-                      defaultValue="English"
+                      name="language"
+                      value={formData.language}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
@@ -359,58 +452,72 @@ export default function UserProfileEdit() {
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Make</label>
                     <Input
-                      defaultValue="Toyota"
+                      name="carPreferences.make"
+                      value={formData.carPreferences.make}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Model</label>
                     <Input
-                      defaultValue="Camry"
+                      name="carPreferences.model"
+                      value={formData.carPreferences.model}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Type</label>
                     <Input
-                      defaultValue="Sedan"
+                      name="carPreferences.type"
+                      value={formData.carPreferences.type}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Steering</label>
                     <Input
-                      defaultValue="Left"
+                      name="carPreferences.steering"
+                      value={formData.carPreferences.steering}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Year</label>
                     <Input
-                      defaultValue="2022"
+                      name="carPreferences.year"
+                      value={formData.carPreferences.year}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-400">
-                      Price Range
-                    </label>
+                    <label className="text-sm text-slate-400">Price Range</label>
                     <Input
-                      defaultValue="$25,000"
+                      name="carPreferences.priceRange"
+                      value={formData.carPreferences.priceRange}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Mileage</label>
                     <Input
-                      defaultValue="15,000 mi"
+                      name="carPreferences.mileage"
+                      value={formData.carPreferences.mileage}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Location</label>
                     <Input
-                      defaultValue="New York, NY"
+                      name="carPreferences.location"
+                      value={formData.carPreferences.location}
+                      onChange={handleInputChange}
                       className="border-slate-800 bg-slate-900/50 text-white"
                     />
                   </div>
@@ -445,6 +552,7 @@ export default function UserProfileEdit() {
                   </Button>
                   <Button
                     variant="outline"
+                    onClick={handleDeleteAccount}
                     className="flex-1 border-red-900/50 text-red-500 hover:bg-red-500/10 hover:border-red-500 transition-colors hover:text-white"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />

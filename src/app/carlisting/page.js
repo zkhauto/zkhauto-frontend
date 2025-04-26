@@ -145,6 +145,37 @@ export default function CarListingPage() {
       params.append('minHorsepower', horsepowerRange[0]);
       params.append('maxHorsepower', horsepowerRange[1]);
 
+      // Add sorting parameters
+      switch (sortOrder) {
+        case 'newest':
+          params.append('sortBy', 'year');
+          params.append('sortOrder', 'desc');
+          break;
+        case 'oldest':
+          params.append('sortBy', 'year');
+          params.append('sortOrder', 'asc');
+          break;
+        case 'price-low':
+          params.append('sortBy', 'price');
+          params.append('sortOrder', 'asc');
+          break;
+        case 'price-high':
+          params.append('sortBy', 'price');
+          params.append('sortOrder', 'desc');
+          break;
+        case 'mileage-low':
+          params.append('sortBy', 'mileage');
+          params.append('sortOrder', 'asc');
+          break;
+        case 'mileage-high':
+          params.append('sortBy', 'mileage');
+          params.append('sortOrder', 'desc');
+          break;
+        default:
+          params.append('sortBy', 'createdAt');
+          params.append('sortOrder', 'desc');
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cars?${params.toString()}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -156,6 +187,19 @@ export default function CarListingPage() {
       console.error("Error fetching cars:", error);
       throw error;
     }
+  };
+
+  // Handle sort change
+  const handleSortChange = (value) => {
+    setSortOrder(value);
+    // Trigger a new fetch with updated sort
+    fetchCars().then(fetchedCars => {
+      setCars(fetchedCars);
+      setFilteredCars(fetchedCars);
+    }).catch(error => {
+      console.error("Error fetching sorted cars:", error);
+      setError(error.message);
+    });
   };
 
   // --- Initial Load Effect ---
@@ -223,6 +267,7 @@ export default function CarListingPage() {
     engineSizeRange,
     engineCylindersRange,
     horsepowerRange,
+    sortOrder,
   ]);
 
   // --- Filtering and Sorting Effect ---
@@ -866,9 +911,8 @@ export default function CarListingPage() {
                 <span className="text-sm text-slate-400">Sort by:</span>
                 <Select
                   value={sortOrder} // Controlled select
-                  onValueChange={(value) => setSortOrder(value || "newest")}
-              defaultValue="newest"
-            >
+                  onValueChange={handleSortChange}
+                >
                   <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700 text-white focus:ring-offset-slate-900 focus:ring-slate-500">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>

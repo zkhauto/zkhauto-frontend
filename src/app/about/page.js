@@ -96,26 +96,28 @@ export default function About() {
             </div>
 
             {/* Why Choose Us */}
-            <div className="mb-16">
-              <h2 className="text-3xl font-bold mb-8 text-center">Why Choose ZKH Auto</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-gray-900 p-8 rounded-lg border border-gray-800">
-                  <h3 className="text-xl font-bold mb-4">Quality Assurance</h3>
-                  <ul className="space-y-3 text-gray-400">
-                    <li>• Rigorous vehicle inspection process</li>
-                    <li>• Verified vehicle history reports</li>
-                    <li>• Premium maintenance standards</li>
-                    <li>• Quality certification for all vehicles</li>
-                  </ul>
-                </div>
-                <div className="bg-gray-900 p-8 rounded-lg border border-gray-800">
-                  <h3 className="text-xl font-bold mb-4">Customer Benefits</h3>
-                  <ul className="space-y-3 text-gray-400">
-                    <li>• Competitive financing options</li>
-                    <li>• Extended warranty coverage</li>
-                    <li>• After-sales support</li>
-                    <li>• Trade-in opportunities</li>
-                  </ul>
+            <div className="py-12">
+              <div className="container mx-auto px-6">
+                <h2 className="text-3xl font-bold text-white mb-8">Why Choose Us</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="bg-slate-900/50 p-6 rounded-lg">
+                    <h3 className="text-xl font-semibold text-white mb-4">Quality Assurance</h3>
+                    <p className="text-gray-400">
+                      Every vehicle in our inventory undergoes a rigorous inspection process to ensure it meets our high standards.
+                    </p>
+                  </div>
+                  <div className="bg-slate-900/50 p-6 rounded-lg">
+                    <h3 className="text-xl font-semibold text-white mb-4">Transparent Pricing</h3>
+                    <p className="text-gray-400">
+                      No hidden fees or surprises. We believe in clear, upfront pricing for all our vehicles.
+                    </p>
+                  </div>
+                  <div className="bg-slate-900/50 p-6 rounded-lg">
+                    <h3 className="text-xl font-semibold text-white mb-4">Expert Support</h3>
+                    <p className="text-gray-400">
+                      Our team of automotive experts is here to guide you through every step of your car-buying journey.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -139,30 +141,6 @@ export default function About() {
                 >
                   Contact Us
                 </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Company Stats */}
-          <div className="bg-gray-900 py-16 mt-16">
-            <div className="container mx-auto px-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                <div>
-                  <div className="text-4xl font-bold text-blue-500 mb-2">500+</div>
-                  <div className="text-gray-400">Cars Sold</div>
-                </div>
-                <div>
-                  <div className="text-4xl font-bold text-blue-500 mb-2">98%</div>
-                  <div className="text-gray-400">Customer Satisfaction</div>
-                </div>
-                <div>
-                  <div className="text-4xl font-bold text-blue-500 mb-2">10+</div>
-                  <div className="text-gray-400">Years Experience</div>
-                </div>
-                <div>
-                  <div className="text-4xl font-bold text-blue-500 mb-2">24/7</div>
-                  <div className="text-gray-400">Support Available</div>
-                </div>
               </div>
             </div>
           </div>

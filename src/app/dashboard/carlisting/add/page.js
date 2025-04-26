@@ -32,7 +32,7 @@ const AddCarPage = () => {
     engineSize: "",
     engineCylinders: "",
     engineHorsepower: "",
-    engineTransmission: "",
+    transmission: "",
     driveTrain: "",
     description: "",
     rating: "",
@@ -351,23 +351,16 @@ const AddCarPage = () => {
                     Transmission
                   </Label>
                   <Select
-                    name="engineTransmission"
-                    value={formData.engineTransmission}
-                    onValueChange={(value) =>
-                      handleSelectChange("engineTransmission", value)
-                    }
+                    name="transmission"
+                    value={formData.transmission}
+                    onValueChange={(value) => handleSelectChange("transmission", value)}
                   >
                     <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                      <SelectValue placeholder="Select transmission" />
+                      <SelectValue placeholder="Select transmission type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Manual">Manual</SelectItem>
                       <SelectItem value="Automatic">Automatic</SelectItem>
-                      <SelectItem value="CVT">CVT</SelectItem>
-                      <SelectItem value="DCT">DCT</SelectItem>
-                      <SelectItem value="Semi-Automatic">
-                        Semi-Automatic
-                      </SelectItem>
+                      <SelectItem value="Manual">Manual</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
