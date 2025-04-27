@@ -20,6 +20,9 @@ const AddCarPage = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isPredicting, setIsPredicting] = useState(false);
+  const [predictedPrice, setPredictedPrice] = useState(null);
+  const [predictedCondition, setPredictedCondition] = useState(null);
   const [formData, setFormData] = useState({
     brand: "",
     model: "",
@@ -137,6 +140,55 @@ const AddCarPage = () => {
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result);
     });
+  };
+
+  const handleAIPrediction = async () => {
+    setIsPredicting(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/cars/predict`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            brand: formData.brand,
+            model: formData.model,
+            year: formData.year,
+            type: formData.type,
+            fuel: formData.fuel,
+            mileage: formData.mileage,
+            color: formData.color,
+            engineSize: formData.engineSize,
+            engineCylinders: formData.engineCylinders,
+            engineHorsepower: formData.engineHorsepower,
+            transmission: formData.transmission,
+            driveTrain: formData.driveTrain,
+            condition: formData.condition,
+            features: formData.features,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to get AI prediction");
+      }
+
+      const data = await response.json();
+      setPredictedPrice(data.predictedPrice);
+      setPredictedCondition(data.predictedCondition);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+      console.error("Failed to get AI prediction:", error);
+    } finally {
+      setIsPredicting(false);
+    }
   };
 
   return (
@@ -595,17 +647,31 @@ const AddCarPage = () => {
               <div className="flex justify-end gap-4 mt-6">
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => router.push("/dashboard/carlisting")}
+                  onClick={() => router.push('/dashboard/carlisting')}
                   className="border-slate-700 text-slate-400 hover:bg-slate-800"
-                  disabled={isLoading}
+                  disabled={isLoading || isPredicting}
                 >
                   Cancel
                 </Button>
                 <Button
+                  type="button"
+                  onClick={handleAIPrediction}
+                  className="bg-purple-600 hover:bg-purple-500"
+                  disabled={isLoading || isPredicting}
+                >
+                  {isPredicting ? (
+                    <>
+                      <span className="loading loading-spinner"></span>
+                      Predicting...
+                    </>
+                  ) : (
+                    "Get AI Prediction"
+                  )}
+                </Button>
+                <Button
                   type="submit"
                   className="bg-blue-600 hover:bg-blue-500"
-                  disabled={isLoading}
+                  disabled={isLoading || isPredicting}
                 >
                   {isLoading ? (
                     <>
