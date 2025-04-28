@@ -9,18 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Cell, Legend, Pie, PieChart, Tooltip } from "recharts";
 import Sidebar from "../../ui/Sidebar";
 
 const AnalyticsPage = () => {
@@ -32,13 +21,10 @@ const AnalyticsPage = () => {
   useEffect(() => {
     const fetchSalesData = async () => {
       // Replace with actual API call
-      const data = [
-        { name: "Volvo XC60", sales: 12 },
-        { name: "Audi Q5", sales: 8 },
-        { name: "BMW X3", sales: 15 },
-        { name: "Tesla Model 3", sales: 20 },
-      ];
-      setSalesData(data);
+      const data = await fetch("http://localhost:5000/api/cars/sold");
+      const jsonData = await data.json();
+
+      setSalesData(jsonData);
     };
 
     const fetchTestDriveData = async () => {
@@ -55,6 +41,10 @@ const AnalyticsPage = () => {
     fetchSalesData();
     fetchTestDriveData();
   }, [filter]);
+
+  // total price calculation
+  const totalPrice = salesData.reduce((acc, car) => acc + car.price, 0);
+  const totalCarsSold = salesData.length;
 
   // Colors for charts
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
@@ -98,7 +88,7 @@ const AnalyticsPage = () => {
                 <CardTitle className="text-white">Total Cars Sold</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-white">55</p>
+                <p className="text-2xl font-bold text-white">{totalCarsSold}</p>
                 <p className="text-sm text-slate-400">Last 30 Days</p>
               </CardContent>
             </Card>
@@ -107,7 +97,7 @@ const AnalyticsPage = () => {
                 <CardTitle className="text-white">Revenue Generated</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-white">€1,250,000</p>
+                <p className="text-2xl font-bold text-white">€{totalPrice}</p>
                 <p className="text-sm text-slate-400">Last 30 Days</p>
               </CardContent>
             </Card>
@@ -123,14 +113,14 @@ const AnalyticsPage = () => {
           </div>
 
           {/* Sales Chart */}
-          <Card className="mb-8 bg-slate-800 border-slate-700">
+          {/* <Card className="mb-8 bg-slate-800 border-slate-700">
             <CardHeader>
               <CardTitle className="text-white">Car Sales</CardTitle>
             </CardHeader>
             <CardContent>
               <BarChart width={600} height={300} data={salesData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
-                <XAxis dataKey="name" stroke="#CBD5E0" />
+                <XAxis dataKey="brand" stroke="#CBD5E0" />
                 <YAxis stroke="#CBD5E0" />
                 <Tooltip
                   contentStyle={{
@@ -143,7 +133,7 @@ const AnalyticsPage = () => {
                 <Bar dataKey="sales" fill="#4299E1" />
               </BarChart>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Test Drives Chart */}
           <Card className="bg-slate-800 border-slate-700">
