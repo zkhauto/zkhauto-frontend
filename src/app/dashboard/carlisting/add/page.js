@@ -297,14 +297,10 @@ const AddCarPage = () => {
                       <SelectValue placeholder="Select fuel type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Gasoline">Gasoline</SelectItem>
+                      <SelectItem value="Petrol">Petrol</SelectItem>
                       <SelectItem value="Diesel">Diesel</SelectItem>
                       <SelectItem value="Electric">Electric</SelectItem>
                       <SelectItem value="Hybrid">Hybrid</SelectItem>
-                      <SelectItem value="Plug-in Hybrid">
-                        Plug-in Hybrid
-                      </SelectItem>
-                      <SelectItem value="Hydrogen">Hydrogen</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -455,8 +451,6 @@ const AddCarPage = () => {
                     <SelectContent>
                       <SelectItem value="New">New</SelectItem>
                       <SelectItem value="Used">Used</SelectItem>
-                      <SelectItem value="Refurbished">Refurbished</SelectItem>
-                      <SelectItem value="Remade">Remade</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -643,6 +637,26 @@ const AddCarPage = () => {
                   </div>
                 </div>
               </div>
+
+              {(predictedPrice || predictedCondition) && (
+                <div className="mt-6 p-4 bg-slate-800 rounded-lg">
+                  <h3 className="text-lg font-semibold text-white mb-2">AI Predictions</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {predictedPrice && (
+                      <div>
+                        <Label className="text-slate-400">Predicted Price</Label>
+                        <p className="text-green-400 font-semibold text-lg">{predictedPrice}</p>
+                      </div>
+                    )}
+                    {predictedCondition && (
+                      <div>
+                        <Label className="text-slate-400">Predicted Condition</Label>
+                        <p className="text-blue-400 font-semibold text-lg">{predictedCondition}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end gap-4 mt-6">
                 <Button

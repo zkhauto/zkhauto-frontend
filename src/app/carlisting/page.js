@@ -224,11 +224,11 @@ export default function CarListingPage() {
           engineCylinders: car.engineCylinders || 0,
           engineHorsepower: car.engineHorsepower || 0,
           engineTransmission: car.engineTransmission || "Unknown",
-          driveTrain: car.driveTrain || "Unknown",
-          condition: car.condition || "Unknown",
+          driveTrain: car.driveTrain?.toUpperCase() || "UNKNOWN",
+          condition: car.condition || "Used",
           rating: car.rating?.toString() || "0",
           type: car.type || "Unknown",
-          status: car.status?.toLowerCase() || "used",
+          status: car.status?.toLowerCase() || "available",
           color: car.color || "Unknown"
         }));
         
@@ -304,12 +304,12 @@ export default function CarListingPage() {
     }
 
     if (selectedStatus !== "any") {
-      console.log('Filtering by condition:', selectedStatus);
-      console.log('Car conditions:', result.map(car => car.condition));
+      console.log('Filtering by status:', selectedStatus);
+      console.log('Car statuses:', result.map(car => car.status));
       result = result.filter((car) => {
-        const carCondition = car.condition;
-        console.log('Comparing:', carCondition, 'with', selectedStatus);
-        return carCondition === selectedStatus;
+        const carStatus = car.status;
+        console.log('Comparing:', carStatus, 'with', selectedStatus);
+        return carStatus === selectedStatus.toLowerCase();
       });
     }
 
@@ -322,11 +322,31 @@ export default function CarListingPage() {
     }
 
     if (selectedDriveTrain !== "any") {
-      result = result.filter((car) => car.driveTrain.toLowerCase() === selectedDriveTrain.toLowerCase());
+      console.log('Filtering by drive train:', selectedDriveTrain);
+      console.log('Car drive trains:', result.map(car => car.driveTrain));
+      result = result.filter((car) => {
+        // If the car doesn't have a drive train set, it should be shown when "UNKNOWN" is selected
+        if (selectedDriveTrain === "UNKNOWN") {
+          return !car.driveTrain || car.driveTrain === "UNKNOWN";
+        }
+        const carDriveTrain = car.driveTrain?.toUpperCase() || "UNKNOWN";
+        console.log('Comparing:', carDriveTrain, 'with', selectedDriveTrain.toUpperCase());
+        return carDriveTrain === selectedDriveTrain.toUpperCase();
+      });
     }
 
     if (selectedRating !== "any") {
       result = result.filter((car) => car.rating.toString() === selectedRating);
+    }
+
+    if (selectedCondition !== "any") {
+      console.log('Filtering by condition:', selectedCondition);
+      console.log('Car conditions:', result.map(car => car.condition));
+      result = result.filter((car) => {
+        const carCondition = car.condition;
+        console.log('Comparing:', carCondition, 'with', selectedCondition);
+        return carCondition === selectedCondition;
+      });
     }
 
     // Range filters - only apply if not at default values
@@ -709,7 +729,7 @@ export default function CarListingPage() {
                           <SelectValue placeholder="Any Status" />
                         </SelectTrigger>
                         <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {["any", "New", "Used"].map((status) => (
+                          {["any", "available", "sold", "reserved"].map((status) => (
                             <SelectItem
                               key={status}
                               value={status}
@@ -720,7 +740,7 @@ export default function CarListingPage() {
                           ))}
                         </SelectContent>
                       </Select>
-            </div>
+                    </div>
 
                     <div className="space-y-2">
                       <Label className="text-slate-400">Color</Label>
@@ -817,7 +837,7 @@ export default function CarListingPage() {
                           ))}
                         </SelectContent>
                       </Select>
-            </div>
+                    </div>
 
                     <div className="space-y-2">
                       <Label className="text-slate-400">Drive Train</Label>
@@ -829,11 +849,11 @@ export default function CarListingPage() {
                           <SelectValue placeholder="Any Drive Train" />
                         </SelectTrigger>
                         <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {["any", "fwd", "rwd", "awd", "4wd"].map((drive) => (
+                          {["any", "FWD", "RWD", "AWD", "4WD"].map((drive) => (
                             <SelectItem
                               key={drive}
                               value={drive}
-                              className="uppercase hover:bg-slate-700 focus:bg-slate-700"
+                              className="hover:bg-slate-700 focus:bg-slate-700"
                             >
                               {drive === "any" ? "Any Drive Train" : drive}
                             </SelectItem>
@@ -852,7 +872,7 @@ export default function CarListingPage() {
                           <SelectValue placeholder="Any Condition" />
                         </SelectTrigger>
                         <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {["any", "New", "Used", "Refurbished", "Remade"].map((condition) => (
+                          {["any", "New", "Used"].map((condition) => (
                             <SelectItem
                               key={condition}
                               value={condition}
@@ -982,7 +1002,10 @@ export default function CarListingPage() {
                           alt={`${car.brand} ${car.model}`}
                           className="object-cover"
                           fill
-                          src={car.images?.[0] || "/placeholder-car.jpg"}
+                          src={car.images?.[0]?.startsWith('http') ? car.images[0] : "/car-placeholder.jpg"}
+                          onError={(e) => {
+                            e.target.src = "/car-placeholder.jpg";
+                          }}
                         />
                         <div className="absolute top-2 right-2">
                           <Button

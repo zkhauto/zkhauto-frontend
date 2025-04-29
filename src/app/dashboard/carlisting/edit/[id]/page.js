@@ -520,8 +520,6 @@ const EditCarPage = () => {
                     <SelectContent>
                       <SelectItem value="New">New</SelectItem>
                       <SelectItem value="Used">Used</SelectItem>
-                      <SelectItem value="Refurbished">Refurbished</SelectItem>
-                      <SelectItem value="Remade">Remade</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
