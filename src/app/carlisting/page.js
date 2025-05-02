@@ -35,6 +35,7 @@ import {
   SlidersHorizontal,
   Mail,
   Phone,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "../ui/Navbar";
@@ -66,15 +67,15 @@ export default function CarListingPage() {
   // --- Filter State ---
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMake, setSelectedMake] = useState("any");
+  const [selectedModel, setSelectedModel] = useState("any");
   const [priceRange, setPriceRange] = useState([0, 1000000]);
-  const [yearRange, setYearRange] = useState([2000, 2024]);
-  const [mileageRange, setMileageRange] = useState([0, 200000]);
+  const [yearRange, setYearRange] = useState([2000, 2030]);
+  const [mileageRange, setMileageRange] = useState([0, 500000]);
   const [sortOrder, setSortOrder] = useState("newest");
   const [smartSearchQuery, setSmartSearchQuery] = useState('');
   const [isSmartSearching, setIsSmartSearching] = useState(false);
 
   // New state variables for advanced filters
-  const [selectedModel, setSelectedModel] = useState("any");
   const [selectedType, setSelectedType] = useState("any");
   const [selectedFuel, setSelectedFuel] = useState("any");
   const [selectedStatus, setSelectedStatus] = useState("any");
@@ -85,7 +86,6 @@ export default function CarListingPage() {
   const [selectedTransmission, setSelectedTransmission] = useState("any");
   const [selectedDriveTrain, setSelectedDriveTrain] = useState("any");
   const [selectedCondition, setSelectedCondition] = useState("any");
-  const [selectedRating, setSelectedRating] = useState("any");
 
   const [uniqueMakes, setUniqueMakes] = useState(["any"]);
   const [uniqueModels, setUniqueModels] = useState(["any"]);
@@ -93,8 +93,7 @@ export default function CarListingPage() {
   // --- Constants for filter ranges ---
   const MAX_PRICE = 1000000;
   const MIN_YEAR = 2000;
-  const MAX_YEAR = new Date().getFullYear();
-  const MAX_MILEAGE = 200000;
+  const MAX_YEAR = 2030;
   const MAX_ENGINE_SIZE = 10;
   const MAX_ENGINE_CYLINDERS = 12;
   const MAX_HORSEPOWER = 1000;
@@ -129,7 +128,6 @@ export default function CarListingPage() {
       if (selectedTransmission !== "any") params.append('transmission', selectedTransmission);
       if (selectedDriveTrain !== "any") params.append('driveTrain', selectedDriveTrain);
       if (selectedCondition !== "any") params.append('condition', selectedCondition);
-      if (selectedRating !== "any") params.append('rating', selectedRating);
 
       // Add range filters
       params.append('minPrice', priceRange[0]);
@@ -260,7 +258,6 @@ export default function CarListingPage() {
     selectedTransmission,
     selectedDriveTrain,
     selectedCondition,
-    selectedRating,
     priceRange,
     yearRange,
     mileageRange,
@@ -335,10 +332,6 @@ export default function CarListingPage() {
       });
     }
 
-    if (selectedRating !== "any") {
-      result = result.filter((car) => car.rating.toString() === selectedRating);
-    }
-
     if (selectedCondition !== "any") {
       console.log('Filtering by condition:', selectedCondition);
       console.log('Car conditions:', result.map(car => car.condition));
@@ -360,7 +353,7 @@ export default function CarListingPage() {
 
       const isPriceInRange = priceRange[0] === 0 && priceRange[1] === MAX_PRICE ? true : price >= priceRange[0] && price <= priceRange[1];
       const isYearInRange = yearRange[0] === MIN_YEAR && yearRange[1] === MAX_YEAR ? true : year >= yearRange[0] && year <= yearRange[1];
-      const isMileageInRange = mileageRange[0] === 0 && mileageRange[1] === MAX_MILEAGE ? true : mileage >= mileageRange[0] && mileage <= mileageRange[1];
+      const isMileageInRange = mileageRange[0] === 0 && mileageRange[1] === 500000 ? true : mileage >= mileageRange[0] && mileage <= mileageRange[1];
       const isEngineSizeInRange = engineSizeRange[0] === 0 && engineSizeRange[1] === 10 ? true : engineSize >= engineSizeRange[0] && engineSize <= engineSizeRange[1];
       const isCylindersInRange = engineCylindersRange[0] === 0 && engineCylindersRange[1] === 12 ? true : engineCylinders >= engineCylindersRange[0] && engineCylinders <= engineCylindersRange[1];
       const isHorsepowerInRange = horsepowerRange[0] === 0 && horsepowerRange[1] === 1000 ? true : horsepower >= horsepowerRange[0] && horsepower <= horsepowerRange[1];
@@ -370,9 +363,18 @@ export default function CarListingPage() {
 
     // Apply sorting
     result.sort((a, b) => {
-      const aValue = parseFloat(a[sortOrder]) || 0;
-      const bValue = parseFloat(b[sortOrder]) || 0;
-      return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+      switch (sortOrder) {
+        case 'price-asc':
+          return (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0);
+        case 'price-desc':
+          return (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0);
+        case 'newest':
+          return (parseInt(b.year) || 0) - (parseInt(a.year) || 0);
+        case 'mileage-low':
+          return (parseFloat(a.mileage) || 0) - (parseFloat(b.mileage) || 0);
+        default:
+          return 0;
+      }
     });
 
     console.log('Total cars:', cars.length);
@@ -390,7 +392,6 @@ export default function CarListingPage() {
     selectedTransmission,
     selectedDriveTrain,
     selectedCondition,
-    selectedRating,
     priceRange,
     yearRange,
     mileageRange,
@@ -416,10 +417,9 @@ export default function CarListingPage() {
     setSelectedTransmission("any");
     setSelectedDriveTrain("any");
     setSelectedCondition("any");
-    setSelectedRating("any");
     setPriceRange([0, MAX_PRICE]);
     setYearRange([MIN_YEAR, MAX_YEAR]);
-    setMileageRange([0, MAX_MILEAGE]);
+    setMileageRange([0, 500000]);
     setSortOrder("newest");
     setShowAdvanced(false);
   };
@@ -508,7 +508,7 @@ export default function CarListingPage() {
           </div>
 
           {/* --- Filter Card --- */}
-          <Card className="border-slate-800 bg-slate-900/50">
+          <Card className="border-gray-200 bg-white">
             <CardContent className="p-4 md:p-6">
               <div className="space-y-4">
                 {/* Basic Filters */}
@@ -518,30 +518,30 @@ export default function CarListingPage() {
                       Search
                     </Label>
                     <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                       <Input
                         id="search"
                         placeholder="Search by make, model, or year"
-                        className="pl-8 text-white bg-slate-800 border-slate-700 placeholder-slate-400 focus:ring-offset-slate-900 focus:ring-slate-500" // Changed focus ring color
-                        value={searchTerm} // Controlled input
+                        className="pl-8 text-gray-900 bg-gray-50 border-gray-200 placeholder-gray-400 focus:ring-offset-white focus:ring-gray-500"
+                        value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
                   </div>
                   <div>
                     <Select
-                      value={selectedMake} // Controlled select
-                      onValueChange={(value) => setSelectedMake(value || "any")} // Handle potential null value
+                      value={selectedMake}
+                      onValueChange={(value) => setSelectedMake(value || "any")}
                     >
-                      <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white focus:ring-offset-slate-900 focus:ring-slate-500">
+                      <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900 focus:ring-offset-white focus:ring-gray-500">
                         <SelectValue placeholder="Any Make" />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700 text-white">
+                      <SelectContent className="bg-white border-gray-200 text-gray-900">
                         {uniqueMakes.map((make) => (
                           <SelectItem
                             key={make}
                             value={make}
-                            className="capitalize hover:bg-slate-700 focus:bg-slate-700"
+                            className="capitalize hover:bg-gray-100 focus:bg-gray-100"
                           >
                             {make === "any" ? "Any Make" : make}
                           </SelectItem>
@@ -550,366 +550,354 @@ export default function CarListingPage() {
                     </Select>
                   </div>
                   <div className="md:col-start-4">
-                    {" "}
-                    {/* Empty div to maintain grid layout, or add another filter */}
-                    <Button className="w-full invisible">Placeholder</Button>{" "}
-                    {/* Keep layout */}
+                    <Button className="w-full invisible">Placeholder</Button>
                   </div>
                 </div>
 
-                {/* Advanced Filter Toggle */}
-                <div className="flex items-center justify-between">
+                {/* Advanced Filter Dropdown */}
+                <div className="relative">
                   <Button
-                    variant="link"
-                    className="flex items-center gap-1 p-0 font-normal h-auto text-slate-400 hover:text-slate-300" // Reverted to slate colors
+                    variant="outline"
+                    className="w-full flex items-center justify-between bg-white border-gray-200 text-gray-900 hover:bg-gray-50"
                     onClick={() => setShowAdvanced(!showAdvanced)}
                   >
-                    <SlidersHorizontal className="w-4 h-4" />
-                    {showAdvanced ? "Hide" : "Show"} Advanced Filters
+                    <div className="flex items-center gap-2">
+                      <SlidersHorizontal className="w-4 h-4" />
+                      <span>Advanced Filters</span>
+                    </div>
+                    <span className={`transform transition-transform duration-200 ${showAdvanced ? 'rotate-180' : ''}`}>
+                      ▼
+                    </span>
                   </Button>
-                  {/* Show Reset only when advanced filters are open OR if any filter is active */}
-                  {(showAdvanced ||
-                    searchTerm ||
-                    selectedMake !== "any" ||
-                    priceRange[0] !== 0 ||
-                    priceRange[1] !== MAX_PRICE ||
-                    yearRange[0] !== MIN_YEAR ||
-                    yearRange[1] !== MAX_YEAR ||
-                    mileageRange[0] !== 0 ||
-                    mileageRange[1] !== MAX_MILEAGE) && (
-                    <Button
-                      variant="link"
-                      className="p-0 font-normal h-auto text-slate-400 hover:text-slate-300"
-                      onClick={handleResetFilters}
-                    >
-                      Reset Filters
-                    </Button>
-                )}
+
+                  {/* Advanced Filters Content */}
+                  {showAdvanced && (
+                    <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-md shadow-lg">
+                      <div className="p-4 space-y-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                          {/* Price Range */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Price Range</Label>
+                            <div className="pt-2">
+                              <Slider
+                                value={priceRange}
+                                onValueChange={setPriceRange}
+                                max={MAX_PRICE}
+                                step={1000}
+                                className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-gray-300 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-gray-400"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between text-sm text-gray-600">
+                              <span>${priceRange[0].toLocaleString()}</span>
+                              <span>
+                                ${priceRange[1].toLocaleString()}
+                                {priceRange[1] === MAX_PRICE ? "+" : ""}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Year Range */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Year</Label>
+                            <div className="pt-2">
+                              <Slider
+                                value={yearRange}
+                                onValueChange={setYearRange}
+                                min={MIN_YEAR}
+                                max={MAX_YEAR}
+                                step={1}
+                                className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-gray-300 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-gray-400"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between text-sm text-gray-600">
+                              <span>{yearRange[0]}</span>
+                              <span>{yearRange[1]}</span>
+                            </div>
+                          </div>
+
+                          {/* Mileage Range */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Mileage</Label>
+                            <div className="pt-2">
+                              <Slider
+                                value={mileageRange}
+                                onValueChange={setMileageRange}
+                                max={500000}
+                                step={10000}
+                                className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-gray-300 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-gray-400"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between text-sm text-gray-600">
+                              <span>{mileageRange[0].toLocaleString()} mi</span>
+                              <span>
+                                {mileageRange[1].toLocaleString()}
+                                {mileageRange[1] === 500000 ? "+ mi" : " mi"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Model */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Model</Label>
+                            <Select
+                              value={selectedModel}
+                              onValueChange={setSelectedModel}
+                            >
+                              <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900">
+                                <SelectValue placeholder="Any Model" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                {uniqueModels.map((model) => (
+                                  <SelectItem
+                                    key={model}
+                                    value={model}
+                                    className="capitalize hover:bg-gray-100 focus:bg-gray-100"
+                                  >
+                                    {model === "any" ? "Any Model" : model}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Type */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Type</Label>
+                            <Select
+                              value={selectedType}
+                              onValueChange={(value) => setSelectedType(value || "any")}
+                            >
+                              <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900">
+                                <SelectValue placeholder="Any Type" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                {["any", "sedan", "suv", "truck", "coupe", "hatchback", "convertible"].map((type) => (
+                                  <SelectItem
+                                    key={type}
+                                    value={type}
+                                    className="capitalize hover:bg-gray-100 focus:bg-gray-100"
+                                  >
+                                    {type === "any" ? "Any Type" : type}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Fuel Type */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Fuel Type</Label>
+                            <Select
+                              value={selectedFuel}
+                              onValueChange={setSelectedFuel}
+                            >
+                              <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900">
+                                <SelectValue placeholder="Any Fuel Type" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                {["any", "gasoline", "diesel", "electric", "hybrid"].map((fuel) => (
+                                  <SelectItem
+                                    key={fuel}
+                                    value={fuel}
+                                    className="capitalize hover:bg-gray-100 focus:bg-gray-100"
+                                  >
+                                    {fuel === "any" ? "Any Fuel Type" : fuel}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
               </div>
 
-                {/* Advanced Filters */}
-                {showAdvanced && (
-                  <div className="grid grid-cols-1 gap-6 pt-4 border-t md:grid-cols-3 border-slate-800">
-                    {/* Existing filters */}
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Price Range</Label>
-                      <div className="pt-2">
-                        <Slider
-                          value={priceRange}
-                          onValueChange={setPriceRange}
-                          max={MAX_PRICE}
-                          step={1000}
-                          className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-slate-500 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-slate-600"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-slate-400">
-                        <span>${priceRange[0].toLocaleString()}</span>
-                        <span>
-                          ${priceRange[1].toLocaleString()}
-                          {priceRange[1] === MAX_PRICE ? "+" : ""}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Year</Label>
-                      <div className="pt-2">
-                        <Slider
-                          value={yearRange}
-                          onValueChange={setYearRange}
-                          min={MIN_YEAR}
-                          max={MAX_YEAR}
-                          step={1}
-                          className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-slate-500 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-slate-600"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-slate-400">
-                        <span>{yearRange[0]}</span>
-                        <span>{yearRange[1]}</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Mileage</Label>
-                      <div className="pt-2">
-                        <Slider
-                          value={mileageRange}
-                          onValueChange={setMileageRange}
-                          max={MAX_MILEAGE}
-                          step={5000}
-                          className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-slate-500 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-slate-600"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-slate-400">
-                        <span>{mileageRange[0].toLocaleString()} mi</span>
-                        <span>
-                          {mileageRange[1].toLocaleString()}
-                          {mileageRange[1] === MAX_MILEAGE ? "+ mi" : " mi"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* New advanced filters */}
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Model</Label>
-                      <Select
-                        value={selectedModel}
-                        onValueChange={setSelectedModel}
-                      >
-                        <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white">
-                          <SelectValue placeholder="Any Model" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {uniqueModels.map((model) => (
-                            <SelectItem
-                              key={model}
-                              value={model}
-                              className="capitalize hover:bg-slate-700 focus:bg-slate-700"
+                          {/* Status */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Status</Label>
+                            <Select
+                              value={selectedStatus}
+                              onValueChange={setSelectedStatus}
                             >
-                              {model === "any" ? "Any Model" : model}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                              <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900">
+                                <SelectValue placeholder="Any Status" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                {["any", "available", "sold", "reserved"].map((status) => (
+                                  <SelectItem
+                                    key={status}
+                                    value={status}
+                                    className="capitalize hover:bg-gray-100 focus:bg-gray-100"
+                                  >
+                                    {status === "any" ? "Any Status" : status}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+            </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Type</Label>
-                      <Select
-                        value={selectedType}
-                        onValueChange={setSelectedType}
-                      >
-                        <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white">
-                          <SelectValue placeholder="Any Type" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {["any", "sedan", "suv", "truck", "coupe", "hatchback", "convertible"].map((type) => (
-                            <SelectItem
-                              key={type}
-                              value={type}
-                              className="capitalize hover:bg-slate-700 focus:bg-slate-700"
+                          {/* Color */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Color</Label>
+                            <Select
+                              value={selectedColor}
+                              onValueChange={setSelectedColor}
                             >
-                              {type === "any" ? "Any Type" : type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                              <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900">
+                                <SelectValue placeholder="Any Color" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                {["any", "black", "white", "silver", "gray", "red", "blue", "green", "yellow", "brown"].map((color) => (
+                                  <SelectItem
+                                    key={color}
+                                    value={color}
+                                    className="capitalize hover:bg-gray-100 focus:bg-gray-100"
+                                  >
+                                    {color === "any" ? "Any Color" : color}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Fuel Type</Label>
-                      <Select
-                        value={selectedFuel}
-                        onValueChange={setSelectedFuel}
-                      >
-                        <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white">
-                          <SelectValue placeholder="Any Fuel Type" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {["any", "gasoline", "diesel", "electric", "hybrid"].map((fuel) => (
-                            <SelectItem
-                              key={fuel}
-                              value={fuel}
-                              className="capitalize hover:bg-slate-700 focus:bg-slate-700"
+                          {/* Engine Size */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Engine Size (L)</Label>
+                            <div className="pt-2">
+                              <Slider
+                                value={engineSizeRange}
+                                onValueChange={setEngineSizeRange}
+                                max={10}
+                                step={0.1}
+                                className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-gray-300 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-gray-400"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between text-sm text-gray-600">
+                              <span>{engineSizeRange[0]}L</span>
+                              <span>{engineSizeRange[1]}L</span>
+                            </div>
+                          </div>
+
+                          {/* Engine Cylinders */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Engine Cylinders</Label>
+                            <div className="pt-2">
+                              <Slider
+                                value={engineCylindersRange}
+                                onValueChange={setEngineCylindersRange}
+                                max={12}
+                                step={1}
+                                className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-gray-300 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-gray-400"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between text-sm text-gray-600">
+                              <span>{engineCylindersRange[0]}</span>
+                              <span>{engineCylindersRange[1]}</span>
+                            </div>
+                          </div>
+
+                          {/* Horsepower */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Horsepower</Label>
+                            <div className="pt-2">
+                              <Slider
+                                value={horsepowerRange}
+                                onValueChange={setHorsepowerRange}
+                                max={1000}
+                                step={10}
+                                className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-gray-300 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-gray-400"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between text-sm text-gray-600">
+                              <span>{horsepowerRange[0]} HP</span>
+                              <span>{horsepowerRange[1]} HP</span>
+                            </div>
+                          </div>
+
+                          {/* Transmission */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Transmission</Label>
+                            <Select
+                              value={selectedTransmission}
+                              onValueChange={setSelectedTransmission}
                             >
-                              {fuel === "any" ? "Any Fuel Type" : fuel}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                              <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900">
+                                <SelectValue placeholder="Any Transmission" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                {["any", "automatic", "manual", "semi-automatic"].map((transmission) => (
+                                  <SelectItem
+                                    key={transmission}
+                                    value={transmission}
+                                    className="capitalize hover:bg-gray-100 focus:bg-gray-100"
+                                  >
+                                    {transmission === "any" ? "Any Transmission" : transmission}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+            </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Status</Label>
-                      <Select
-                        value={selectedStatus}
-                        onValueChange={setSelectedStatus}
-                      >
-                        <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white">
-                          <SelectValue placeholder="Any Status" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {["any", "available", "sold", "reserved"].map((status) => (
-                            <SelectItem
-                              key={status}
-                              value={status}
-                              className="capitalize hover:bg-slate-700 focus:bg-slate-700"
+                          {/* Drive Train */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Drive Train</Label>
+                            <Select
+                              value={selectedDriveTrain}
+                              onValueChange={setSelectedDriveTrain}
                             >
-                              {status === "any" ? "Any Status" : status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                              <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900">
+                                <SelectValue placeholder="Any Drive Train" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                {["any", "FWD", "RWD", "AWD", "4WD"].map((drive) => (
+                                  <SelectItem
+                                    key={drive}
+                                    value={drive}
+                                    className="hover:bg-gray-100 focus:bg-gray-100"
+                                  >
+                                    {drive === "any" ? "Any Drive Train" : drive}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Color</Label>
-                      <Select
-                        value={selectedColor}
-                        onValueChange={setSelectedColor}
-                      >
-                        <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white">
-                          <SelectValue placeholder="Any Color" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {["any", "black", "white", "silver", "gray", "red", "blue", "green", "yellow", "brown"].map((color) => (
-                            <SelectItem
-                              key={color}
-                              value={color}
-                              className="capitalize hover:bg-slate-700 focus:bg-slate-700"
+                          {/* Condition */}
+                          <div className="space-y-2">
+                            <Label className="text-gray-700">Condition</Label>
+                            <Select
+                              value={selectedCondition}
+                              onValueChange={setSelectedCondition}
                             >
-                              {color === "any" ? "Any Color" : color}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                              <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900">
+                                <SelectValue placeholder="Any Condition" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                {["any", "New", "Used"].map((condition) => (
+                                  <SelectItem
+                                    key={condition}
+                                    value={condition}
+                                    className="capitalize hover:bg-gray-100 focus:bg-gray-100"
+                                  >
+                                    {condition === "any" ? "Any Condition" : condition}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Engine Size (L)</Label>
-                      <div className="pt-2">
-                        <Slider
-                          value={engineSizeRange}
-                          onValueChange={setEngineSizeRange}
-                          max={10}
-                          step={0.1}
-                          className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-slate-500 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-slate-600"
-                        />
+                        {/* Reset Filters Button */}
+                        <div className="flex justify-end pt-4">
+                          <Button
+                            variant="outline"
+                            className="text-gray-700 hover:bg-gray-100"
+                            onClick={handleResetFilters}
+                          >
+                            Reset Filters
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between text-sm text-slate-400">
-                        <span>{engineSizeRange[0]}L</span>
-                        <span>{engineSizeRange[1]}L</span>
-                      </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Engine Cylinders</Label>
-                      <div className="pt-2">
-                        <Slider
-                          value={engineCylindersRange}
-                          onValueChange={setEngineCylindersRange}
-                          max={12}
-                          step={1}
-                          className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-slate-500 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-slate-600"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-slate-400">
-                        <span>{engineCylindersRange[0]}</span>
-                        <span>{engineCylindersRange[1]}</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Horsepower</Label>
-                      <div className="pt-2">
-                        <Slider
-                          value={horsepowerRange}
-                          onValueChange={setHorsepowerRange}
-                          max={1000}
-                          step={10}
-                          className="[&>span:first-child]:h-1 [&>span:first-child_span]:bg-slate-500 [&>span:first-child_span]:h-1 [&>button]:bg-white [&>button]:w-4 [&>button]:h-4 [&>button]:border-2 [&>button]:border-slate-600"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-slate-400">
-                        <span>{horsepowerRange[0]} HP</span>
-                        <span>{horsepowerRange[1]} HP</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Transmission</Label>
-                      <Select
-                        value={selectedTransmission}
-                        onValueChange={setSelectedTransmission}
-                      >
-                        <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white">
-                          <SelectValue placeholder="Any Transmission" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {["any", "automatic", "manual", "semi-automatic"].map((transmission) => (
-                            <SelectItem
-                              key={transmission}
-                              value={transmission}
-                              className="capitalize hover:bg-slate-700 focus:bg-slate-700"
-                            >
-                              {transmission === "any" ? "Any Transmission" : transmission}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Drive Train</Label>
-                      <Select
-                        value={selectedDriveTrain}
-                        onValueChange={setSelectedDriveTrain}
-                      >
-                        <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white">
-                          <SelectValue placeholder="Any Drive Train" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {["any", "FWD", "RWD", "AWD", "4WD"].map((drive) => (
-                            <SelectItem
-                              key={drive}
-                              value={drive}
-                              className="hover:bg-slate-700 focus:bg-slate-700"
-                            >
-                              {drive === "any" ? "Any Drive Train" : drive}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Condition</Label>
-                      <Select
-                        value={selectedCondition}
-                        onValueChange={setSelectedCondition}
-                      >
-                        <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white">
-                          <SelectValue placeholder="Any Condition" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {["any", "New", "Used"].map((condition) => (
-                            <SelectItem
-                              key={condition}
-                              value={condition}
-                              className="capitalize hover:bg-slate-700 focus:bg-slate-700"
-                            >
-                              {condition === "any" ? "Any Condition" : condition}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Rating</Label>
-                      <Select
-                        value={selectedRating}
-                        onValueChange={setSelectedRating}
-                      >
-                        <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white">
-                          <SelectValue placeholder="Any Rating" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                          {["any", "5", "4", "3", "2", "1"].map((rating) => (
-                            <SelectItem
-                              key={rating}
-                              value={rating}
-                              className="hover:bg-slate-700 focus:bg-slate-700"
-                            >
-                              {rating === "any" ? "Any Rating" : `${rating} Stars`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
             </CardContent>
           </Card>
 
@@ -956,7 +944,7 @@ export default function CarListingPage() {
                       Price: High to Low
                     </SelectItem>
                     <SelectItem
-                      value="mileage"
+                      value="mileage-low"
                       className="hover:bg-slate-700 focus:bg-slate-700"
                     >
                       Mileage: Low to High

@@ -50,8 +50,8 @@ const Dashboard = () => {
     const fetchTestDriveData = async () => {
       try {
         const data = await fetch("http://localhost:5000/api/test-drives/approve");
-      const jsonData = await data.json();
-      setTestDriveData(jsonData);
+        const jsonData = await data.json();
+        setTestDriveData(jsonData);
       } catch (error) {
         console.error("Error fetching test drive data:", error);
       }
@@ -69,21 +69,21 @@ const Dashboard = () => {
   return (
     <main>
       <Sidebar />
-      <section className="min-h-screen bg-slate-950 p-6 ml-64">
+      <section className="min-h-screen bg-white p-6 ml-64">
         {/* Filters */}
         <div className="flex gap-4 mb-6">
           <Select value={filter} onValueChange={(value) => setFilter(value)}>
-            <SelectTrigger className="w-[200px] bg-slate-800 border-slate-700 text-white">
+            <SelectTrigger className="w-[200px] bg-gray-50 border-gray-200 text-gray-900">
               <SelectValue placeholder="Select Time Period" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-slate-700 text-white">
-              <SelectItem value="last_7_days" className="hover:bg-slate-700">
+            <SelectContent className="bg-white border-gray-200 text-gray-900">
+              <SelectItem value="last_7_days" className="hover:bg-gray-100">
                 Last 7 Days
               </SelectItem>
-              <SelectItem value="last_30_days" className="hover:bg-slate-700">
+              <SelectItem value="last_30_days" className="hover:bg-gray-100">
                 Last 30 Days
               </SelectItem>
-              <SelectItem value="last_year" className="hover:bg-slate-700">
+              <SelectItem value="last_year" className="hover:bg-gray-100">
                 Last Year
               </SelectItem>
             </SelectContent>
@@ -91,16 +91,16 @@ const Dashboard = () => {
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Customers Card */}
-          <Card className="bg-slate-900/50 border-slate-800">
+          <Card className="bg-white border-gray-200">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-2 bg-slate-800 rounded-lg">
-                  <Users className="w-6 h-6 text-slate-400" />
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <Users className="w-6 h-6 text-gray-600" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-slate-400">Total Car Sold</p>
+                  <p className="text-sm text-gray-600">Total Car Sold</p>
                   <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-bold text-white">
+                    <h2 className="text-3xl font-bold text-gray-900">
                       {totalCarsSold}
                     </h2>
                     <span className="text-sm font-medium text-emerald-500"></span>
@@ -111,16 +111,16 @@ const Dashboard = () => {
           </Card>
 
           {/* Orders Card */}
-          <Card className="bg-slate-900/50 border-slate-800">
+          <Card className="bg-white border-gray-200">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-2 bg-slate-800 rounded-lg">
-                  <Package className="w-6 h-6 text-slate-400" />
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <Package className="w-6 h-6 text-gray-600" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-slate-400">Revenue Generated</p>
+                  <p className="text-sm text-gray-600">Revenue Generated</p>
                   <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-bold text-white">
+                    <h2 className="text-3xl font-bold text-gray-900">
                       €{totalPrice.toLocaleString()}
                     </h2>
                     <span className="text-sm font-medium text-red-500"></span>
@@ -131,16 +131,16 @@ const Dashboard = () => {
           </Card>
 
           {/* Test Drives Card */}
-          <Card className="bg-slate-900/50 border-slate-800">
+          <Card className="bg-white border-gray-200">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-2 bg-slate-800 rounded-lg">
-                  <Package className="w-6 h-6 text-slate-400" />
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <Package className="w-6 h-6 text-gray-600" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-slate-400">Test Drives Booked</p>
+                  <p className="text-sm text-gray-600">Test Drives Booked</p>
                   <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-bold text-white">
+                    <h2 className="text-3xl font-bold text-gray-900">
                       {totalTestDrives}
                     </h2>
                     <span className="text-sm font-medium text-red-500"></span>
@@ -151,43 +151,43 @@ const Dashboard = () => {
           </Card>
 
           {/* Monthly Sales Chart */}
-          <Card className="bg-slate-900/50 border-slate-800 lg:col-span-3">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div className="space-y-1">
-                <h3 className="text-xl font-medium text-white">
+          <Card className="bg-white border-gray-200 lg:col-span-3 mt-8">
+            <CardHeader className="flex flex-row items-center justify-between pb-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-medium text-gray-900">
                   Monthly Sales
                 </h3>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-gray-600 mt-2">
                   Sales performance over the last 12 months
                 </p>
               </div>
-              <Button variant="ghost" size="icon" className="text-slate-400">
+              <Button variant="ghost" size="icon" className="text-gray-600">
                 <TrendingUp className="w-4 h-4" />
               </Button>
             </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
+            <CardContent className="pt-4">
+              <div className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={monthlySales}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="month" 
-                      stroke="#94a3b8"
-                      tick={{ fill: '#94a3b8' }}
+                      stroke="#6b7280"
+                      tick={{ fill: '#6b7280' }}
                     />
                     <YAxis 
-                      stroke="#94a3b8"
-                      tick={{ fill: '#94a3b8' }}
+                      stroke="#6b7280"
+                      tick={{ fill: '#6b7280' }}
                       tickFormatter={(value) => `€${value.toLocaleString()}`}
                     />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: '#1e293b',
-                        border: '1px solid #334155',
-                        color: '#e2e8f0'
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e5e7eb',
+                        color: '#111827'
                       }}
                       formatter={(value) => [`€${value.toLocaleString()}`, 'Sales']}
                     />
@@ -210,4 +210,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard; 

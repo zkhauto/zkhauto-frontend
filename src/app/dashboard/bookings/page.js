@@ -100,39 +100,39 @@ const AdminTestDrives = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="text-white">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="text-gray-900">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="text-red-500">Error: {error}</div>
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="text-red-600">Error: {error}</div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
+    <div className="flex min-h-screen bg-white">
       <Sidebar />
       <div className="flex-1 ml-64">
         <div className="p-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white">
+            <h1 className="text-3xl font-bold text-gray-900">
               Test Drive Bookings
             </h1>
-            <p className="text-slate-400 mt-2">
+            <p className="text-gray-600 mt-2">
               Manage all test drive bookings
             </p>
           </div>
 
           {/* Search Bar */}
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 bg-slate-900/50 border-slate-800 p-4 rounded-lg">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 bg-gray-50 border border-gray-200 p-4 rounded-lg">
             <div className="relative w-full sm:w-96">
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                 size={18}
               />
               <Input
@@ -140,41 +140,41 @@ const AdminTestDrives = () => {
                 placeholder="Search test drives..."
                 value={search}
                 onChange={handleSearch}
-                className="pl-10 w-full bg-slate-900 border-slate-800 text-white placeholder:text-slate-400"
+                className="pl-10 w-full bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
               />
             </div>
           </div>
 
           {/* Table */}
-          <div className="bg-slate-900/50 border-slate-800 rounded-lg">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg">
             <Table>
               <TableHeader>
-                <TableRow className="border-slate-800">
-                  <TableHead className="text-slate-400">Name</TableHead>
-                  <TableHead className="text-slate-400">Email</TableHead>
-                  <TableHead className="text-slate-400">Car Model</TableHead>
-                  <TableHead className="text-slate-400">Date & Time</TableHead>
-                  <TableHead className="text-slate-400">Notes</TableHead>
-                  <TableHead className="text-slate-400">Status</TableHead>
-                  <TableHead className="text-slate-400 text-right">
+                <TableRow className="border-gray-200">
+                  <TableHead className="text-gray-900">Name</TableHead>
+                  <TableHead className="text-gray-900">Email</TableHead>
+                  <TableHead className="text-gray-900">Car Model</TableHead>
+                  <TableHead className="text-gray-900">Date & Time</TableHead>
+                  <TableHead className="text-gray-900">Notes</TableHead>
+                  <TableHead className="text-gray-900">Status</TableHead>
+                  <TableHead className="text-gray-900 text-right">
                     Actions
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTestDrives.map((drive) => (
-                  <TableRow key={drive._id} className="border-slate-800">
-                    <TableCell className="text-white">{drive.name}</TableCell>
-                    <TableCell className="text-slate-400">
+                  <TableRow key={drive._id} className="border-gray-200">
+                    <TableCell className="text-gray-900">{drive.name}</TableCell>
+                    <TableCell className="text-gray-600">
                       {drive.email}
                     </TableCell>
-                    <TableCell className="text-slate-400">
+                    <TableCell className="text-gray-600">
                       {drive.carModel}
                     </TableCell>
-                    <TableCell className="text-slate-400">
+                    <TableCell className="text-gray-600">
                       {drive.date} at {drive.time}
                     </TableCell>
-                    <TableCell className="text-slate-400">
+                    <TableCell className="text-gray-600">
                       {drive.notes}
                     </TableCell>
                     <TableCell>
@@ -198,7 +198,7 @@ const AdminTestDrives = () => {
                           onClick={() =>
                             handleStatusUpdate(drive._id, "approved")
                           }
-                          className="text-green-500 hover:bg-green-500/10"
+                          className="text-green-600 hover:text-green-700 hover:bg-gray-200"
                         >
                           <Check className="h-4 w-4" />
                         </Button>
@@ -208,7 +208,7 @@ const AdminTestDrives = () => {
                           onClick={() =>
                             handleStatusUpdate(drive._id, "rejected")
                           }
-                          className="text-red-500 hover:bg-red-500/10"
+                          className="text-red-600 hover:text-red-700 hover:bg-gray-200"
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -216,7 +216,7 @@ const AdminTestDrives = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDelete(drive._id)}
-                          className="text-destructive hover:bg-destructive/10"
+                          className="text-gray-600 hover:text-gray-700 hover:bg-gray-200"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -228,16 +228,16 @@ const AdminTestDrives = () => {
             </Table>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm text-slate-400">
-                    Showing <span className="font-medium text-white">1</span> to{" "}
-                    <span className="font-medium text-white">
+                  <p className="text-sm text-gray-500">
+                    Showing <span className="font-medium text-gray-900">1</span> to{" "}
+                    <span className="font-medium text-gray-900">
                       {filteredTestDrives.length}
                     </span>{" "}
                     of{" "}
-                    <span className="font-medium text-white">
+                    <span className="font-medium text-gray-900">
                       {filteredTestDrives.length}
                     </span>{" "}
                     results
@@ -248,21 +248,21 @@ const AdminTestDrives = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-slate-800 text-slate-400 hover:bg-slate-800"
+                      className="border-gray-200 text-gray-500 hover:bg-gray-200"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-slate-800 text-white bg-slate-800"
+                      className="border-gray-200 text-gray-900 bg-gray-200"
                     >
                       1
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-slate-800 text-slate-400 hover:bg-slate-800"
+                      className="border-gray-200 text-gray-500 hover:bg-gray-200"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>

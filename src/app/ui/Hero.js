@@ -52,41 +52,40 @@ const Hero = () => {
   ];
 
   return (
-    <div className=" bg-gray-900">
+    <div className="bg-white">
       <Navbar />
-      <section className="relative bg-gray-900 overflow-hidden">
+      <section className="relative bg-white overflow-hidden">
         <Swiper
-          modules={[Autoplay, Pagination]}
-          autoplay={{ delay: 5000, disableOnInteraction: false }}
+          modules={[Pagination]}
           pagination={{ clickable: true }}
           className="w-full"
         >
           {slides.map((slide, index) => (
-            <SwiperSlide key={index} className="bg-gray-900">
+            <SwiperSlide key={index} className="bg-white">
               <div className="container mx-auto">
                 <div className="relative min-h-[400px] sm:min-h-[500px] md:min-h-[500px] lg:min-h-[600px] flex flex-col md:flex-row items-center">
                   {/* Left Content */}
-                  <div className="relative z-10 w-full md:max-w-lg lg:max-w-xl pt-8 sm:pt-10 md:pt-4 lg:pt-6 pb-6 sm:pb-8 md:pb-4  text-center md:text-left">
-                    <h1 className="text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-bold leading-tight mb-3 sm:mb-4 text-white">
+                  <div className="relative z-10 w-full md:max-w-lg lg:max-w-xl pt-8 sm:pt-10 md:pt-4 lg:pt-6 pb-6 sm:pb-8 md:pb-4 text-center md:text-left">
+                    <h1 className="text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-bold leading-tight mb-3 sm:mb-4 text-gray-900">
                       {slide.title}
-                      <span className="text-blue-400 block mt-1 sm:mt-2">
+                      <span className="text-blue-600 block mt-1 sm:mt-2">
                         {slide.highlight}
                       </span>
                     </h1>
-                    <p className="text-gray-300 text-base sm:text-lg md:text-lg lg:text-xl mb-4 sm:mb-6 max-w-lg mx-auto md:mx-0 leading-relaxed">
+                    <p className="text-gray-600 text-base sm:text-lg md:text-lg lg:text-xl mb-4 sm:mb-6 max-w-lg mx-auto md:mx-0 leading-relaxed">
                       {slide.description}
                     </p>
                     <div className="flex flex-wrap justify-center md:justify-start gap-3">
                       <Button
                         onClick={slide.carListing}
-                        className="bg-blue-500 text-white hover:bg-gray-900 px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base transition-colors"
+                        className="bg-blue-600 text-white hover:bg-blue-700 px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base transition-colors"
                       >
                         {slide.button1}
                       </Button>
                       <Button
                         onClick={slide.contactClick}
                         variant="outline"
-                        className="text-gray-900 hover:bg-gray-900 hover:text-white px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base transition-colors"
+                        className="border-blue-600 text-blue-600 hover:bg-blue-50 px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base transition-colors"
                       >
                         {slide.button2}
                       </Button>

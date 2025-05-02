@@ -212,21 +212,21 @@ const CarListingPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-900">
+    <div className="flex min-h-screen bg-white">
       <Sidebar />
       <div className="flex-1 ml-64">
         <div className="p-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white">Car Management</h1>
-            <p className="text-white mt-2">
+            <h1 className="text-3xl font-bold text-gray-900">Car Management</h1>
+            <p className="text-gray-600 mt-2">
               Manage car listings and inventory
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 bg-gray-800 border border-gray-700 p-4 rounded-lg">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 bg-gray-50 border border-gray-200 p-4 rounded-lg">
             <div className="relative w-full sm:w-96">
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                 size={18}
               />
               <input
@@ -234,11 +234,11 @@ const CarListingPage = () => {
                 placeholder="Search by brand, model, year, price, or status..."
                 value={search}
                 onChange={handleSearch}
-                className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base font-medium"
+                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base font-medium"
                 style={{ 
-                  color: 'white',
-                  WebkitTextFillColor: 'white',
-                  caretColor: 'white'
+                  color: 'black',
+                  WebkitTextFillColor: 'black',
+                  caretColor: 'black'
                 }}
                 aria-label="Search cars"
               />
@@ -268,22 +268,22 @@ const CarListingPage = () => {
             </div>
           </div>
 
-          <div className="bg-gray-800 border border-gray-700 rounded-lg">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg">
             <Table>
               <TableHeader>
-                <TableRow className="border-gray-700">
-                  <TableHead className="text-white font-semibold w-10">
+                <TableRow className="border-gray-200">
+                  <TableHead className="text-gray-900 font-semibold w-10">
                     <Checkbox 
                       checked={currentCars.length > 0 && selectedCars.length === currentCars.length}
                       onCheckedChange={handleSelectAll}
-                      className="border-gray-600 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                      className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                     />
                   </TableHead>
-                  <TableHead className="text-white font-semibold">Car</TableHead>
-                  <TableHead className="text-white font-semibold">Price</TableHead>
-                  <TableHead className="text-white font-semibold">Status</TableHead>
-                  <TableHead className="text-white font-semibold">Added Date</TableHead>
-                  <TableHead className="text-white font-semibold text-right">
+                  <TableHead className="text-gray-900 font-semibold">Car</TableHead>
+                  <TableHead className="text-gray-900 font-semibold">Price</TableHead>
+                  <TableHead className="text-gray-900 font-semibold">Status</TableHead>
+                  <TableHead className="text-gray-900 font-semibold">Added Date</TableHead>
+                  <TableHead className="text-gray-900 font-semibold text-right">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -293,7 +293,7 @@ const CarListingPage = () => {
                   <TableRow>
                     <TableCell
                       colSpan={6}
-                      className="text-center text-white py-8"
+                      className="text-center text-gray-900 py-8"
                     >
                       Loading cars...
                     </TableCell>
@@ -302,7 +302,7 @@ const CarListingPage = () => {
                   <TableRow>
                     <TableCell
                       colSpan={6}
-                      className="text-center text-red-400 py-8"
+                      className="text-center text-red-600 py-8"
                     >
                       Error: {error}
                     </TableCell>
@@ -311,19 +311,19 @@ const CarListingPage = () => {
                   <TableRow>
                     <TableCell
                       colSpan={6}
-                      className="text-center text-white py-8"
+                      className="text-center text-gray-900 py-8"
                     >
                       No cars found
                     </TableCell>
                   </TableRow>
                 ) : (
                   currentCars.map((car) => (
-                    <TableRow key={car._id} className="border-gray-700">
+                    <TableRow key={car._id} className="border-gray-200">
                       <TableCell>
                         <Checkbox 
                           checked={selectedCars.includes(car._id)}
                           onCheckedChange={(checked) => handleSelectCar(car._id, checked)}
-                          className="border-gray-600 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                          className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                         />
                       </TableCell>
                     <TableCell>
@@ -341,17 +341,17 @@ const CarListingPage = () => {
                           />
                         </div>
                         <div>
-                          <div className="font-medium text-white">
+                          <div className="font-medium text-gray-900">
                               {car.brand} {car.model}
                           </div>
-                            <div className="text-sm text-white">
+                            <div className="text-sm text-gray-600">
                             {car.year}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                        <div className="text-white">
+                        <div className="text-gray-900">
                           ${car.price.toLocaleString()}
                       </div>
                     </TableCell>
@@ -386,7 +386,7 @@ const CarListingPage = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                        <div className="text-sm text-white">
+                        <div className="text-sm text-gray-600">
                           {new Date(car.createdAt).toLocaleDateString()}
                       </div>
                     </TableCell>
@@ -396,7 +396,7 @@ const CarListingPage = () => {
                         variant="ghost"
                         size="icon"
                             onClick={() => handleEdit(car)}
-                            className="text-white hover:text-white hover:bg-gray-800"
+                            className="text-gray-900 hover:text-gray-900 hover:bg-gray-200"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -404,11 +404,11 @@ const CarListingPage = () => {
                         variant="ghost"
                         size="icon"
                             onClick={() => handleDelete(car)}
-                            className="text-red-500 hover:text-red-400 hover:bg-gray-800"
+                            className="text-red-600 hover:text-red-500 hover:bg-gray-200"
                             disabled={isDeleting && carToDelete === car._id}
                       >
                             {isDeleting && carToDelete === car._id ? (
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent"></div>
                             ) : (
                         <Trash2 className="h-4 w-4" />
                             )}
@@ -421,20 +421,20 @@ const CarListingPage = () => {
               </TableBody>
             </Table>
 
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-700">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm text-white">
+                  <p className="text-sm text-gray-900">
                     Showing{" "}
-                    <span className="font-medium text-white">
+                    <span className="font-medium text-gray-900">
                       {startIndex + 1}
                     </span>
                     to
-                    <span className="font-medium text-white">
+                    <span className="font-medium text-gray-900">
                       {Math.min(endIndex, totalCars)}
                     </span>{" "}
                     of{" "}
-                    <span className="font-medium text-white">{totalCars}</span>{" "}
+                    <span className="font-medium text-gray-900">{totalCars}</span>{" "}
                     results
                   </p>
                 </div>
@@ -447,7 +447,7 @@ const CarListingPage = () => {
                         setCurrentPage((prev) => Math.max(prev - 1, 1))
                       }
                       disabled={currentPage === 1}
-                      className="border-gray-700 text-white hover:bg-gray-800"
+                      className="border-gray-200 text-gray-900 hover:bg-gray-300"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -458,10 +458,10 @@ const CarListingPage = () => {
                       variant="outline"
                       size="sm"
                           onClick={() => setCurrentPage(page)}
-                          className={`border-gray-700 ${
+                          className={`border-gray-200 ${
                             currentPage === page
-                              ? "text-white bg-gray-800"
-                              : "text-white hover:bg-gray-800"
+                              ? "text-gray-900 bg-gray-300"
+                              : "text-gray-900 hover:bg-gray-300"
                           }`}
                         >
                           {page}
@@ -475,7 +475,7 @@ const CarListingPage = () => {
                         setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                       }
                       disabled={currentPage === totalPages}
-                      className="border-gray-700 text-white hover:bg-gray-800"
+                      className="border-gray-200 text-gray-900 hover:bg-gray-300"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>

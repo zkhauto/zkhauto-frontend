@@ -24,7 +24,6 @@ const Navbar = () => {
     const publicLinks = [
       { href: "/", label: "Home" },
       { href: "/carlisting", label: "Car Listings" },
-      { href: "/about", label: "About" },
       { href: "/contact", label: "Contact" },
     ];
 
