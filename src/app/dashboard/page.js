@@ -1,21 +1,72 @@
-import {
-  Users,
-  Package,
-  MoreVertical,
-  Car,
-  Calendar,
-  BarChart,
-  Bot,
-} from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+"use client";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MoreVertical, Package, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 import Sidebar from "../ui/Sidebar";
 const Dashboard = () => {
+  const [salesData, setSalesData] = useState([]);
+  const [testDriveData, setTestDriveData] = useState([]);
+  const [filter, setFilter] = useState("last_30_days");
+
+  // Fetch sales data (mock data for example)
+  useEffect(() => {
+    const fetchSalesData = async () => {
+      // Replace with actual API call
+      const data = await fetch("http://localhost:5000/api/cars/sold");
+      const jsonData = await data.json();
+
+      setSalesData(jsonData);
+    };
+
+    const fetchTestDriveData = async () => {
+      // Replace with actual API call
+      const data = await fetch(
+        "http://localhost:5000/api//test-drives/approve"
+      );
+      const jsonData = await data.json();
+      setTestDriveData(jsonData);
+    };
+
+    fetchSalesData();
+    fetchTestDriveData();
+  }, [filter]);
+
+  // total price calculation
+  const totalPrice = salesData.reduce((acc, car) => acc + car.price, 0);
+  const totalCarsSold = salesData.length;
+  const totalTestDrives = testDriveData.length;
+
   return (
     <main>
       <Sidebar />
       <section className="min-h-screen bg-slate-950 p-6 ml-64">
+        {/* Filters */}
+        <div className="flex gap-4 mb-6">
+          <Select value={filter} onValueChange={(value) => setFilter(value)}>
+            <SelectTrigger className="w-[200px] bg-slate-800 border-slate-700 text-white">
+              <SelectValue placeholder="Select Time Period" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-slate-700 text-white">
+              <SelectItem value="last_7_days" className="hover:bg-slate-700">
+                Last 7 Days
+              </SelectItem>
+              <SelectItem value="last_30_days" className="hover:bg-slate-700">
+                Last 30 Days
+              </SelectItem>
+              <SelectItem value="last_year" className="hover:bg-slate-700">
+                Last Year
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Customers Card */}
           <Card className="bg-slate-900/50 border-slate-800">
@@ -25,12 +76,12 @@ const Dashboard = () => {
                   <Users className="w-6 h-6 text-slate-400" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-slate-400">Customers</p>
+                  <p className="text-sm text-slate-400">Total Car Sold</p>
                   <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-bold text-white">3,782</h2>
-                    <span className="text-sm font-medium text-emerald-500">
-                      ↑ 11.01%
-                    </span>
+                    <h2 className="text-3xl font-bold text-white">
+                      {totalCarsSold}
+                    </h2>
+                    <span className="text-sm font-medium text-emerald-500"></span>
                   </div>
                 </div>
               </div>
@@ -45,12 +96,31 @@ const Dashboard = () => {
                   <Package className="w-6 h-6 text-slate-400" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-slate-400">Bookings</p>
+                  <p className="text-sm text-slate-400">Revenue Generated</p>
                   <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-bold text-white">5,359</h2>
-                    <span className="text-sm font-medium text-red-500">
-                      ↓ 9.05%
-                    </span>
+                    <h2 className="text-3xl font-bold text-white">
+                      €{totalPrice}
+                    </h2>
+                    <span className="text-sm font-medium text-red-500"></span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          {/* test drives */}
+          <Card className="bg-slate-900/50 border-slate-800">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-slate-800 rounded-lg">
+                  <Package className="w-6 h-6 text-slate-400" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-slate-400">Test Drives Booked</p>
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-3xl font-bold text-white">
+                      {totalTestDrives}
+                    </h2>
+                    <span className="text-sm font-medium text-red-500"></span>
                   </div>
                 </div>
               </div>
@@ -58,7 +128,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Monthly Target Card */}
-          <Card className="bg-slate-900/50 border-slate-800 lg:row-span-2">
+          {/* <Card className="bg-slate-900/50 border-slate-800 lg:row-span-2">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="space-y-1">
                 <h3 className="text-xl font-medium text-white">
@@ -76,7 +146,7 @@ const Dashboard = () => {
               <div className="flex flex-col items-center justify-center py-6 space-y-4">
                 <div className="relative w-48 h-48">
                   <svg className="w-full h-full" viewBox="0 0 100 100">
-                    {/* Background circle */}
+                   
                     <circle
                       cx="50"
                       cy="50"
@@ -85,7 +155,7 @@ const Dashboard = () => {
                       stroke="#1e293b"
                       strokeWidth="10"
                     />
-                    {/* Progress circle */}
+                   
                     <circle
                       cx="50"
                       cy="50"
@@ -127,7 +197,7 @@ const Dashboard = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Monthly Sales Chart */}
           <Card className="bg-slate-900/50 border-slate-800 md:col-span-2">
