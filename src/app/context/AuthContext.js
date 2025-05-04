@@ -15,14 +15,22 @@ export function AuthProvider({ children }) {
           "http://localhost:5000/users/current-user",
           {
             credentials: "include",
+            headers: {
+              'Content-Type': 'application/json'
+            }
           }
         );
+        
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
+        } else {
+          console.log('Auth check failed:', response.status);
+          setUser(null);
         }
       } catch (error) {
         console.error("Auth check failed:", error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
