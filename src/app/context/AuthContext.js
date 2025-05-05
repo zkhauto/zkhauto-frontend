@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log('Checking auth status...');
         const response = await fetch(
           "http://localhost:5000/users/current-user",
           {
@@ -23,6 +24,7 @@ export function AuthProvider({ children }) {
         
         if (response.ok) {
           const userData = await response.json();
+          console.log('Auth check successful:', userData);
           setUser(userData);
         } else {
           console.log('Auth check failed:', response.status);

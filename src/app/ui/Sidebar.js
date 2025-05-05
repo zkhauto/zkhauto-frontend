@@ -1,4 +1,4 @@
-import { BarChart, Bot, Calendar, Car, Home, Users } from "lucide-react";
+import { BarChart, Bot, Calendar, Car, Home, Users, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
 const Sidebar = () => {
@@ -32,6 +32,11 @@ const Sidebar = () => {
       href: "/dashboard/messages",
       icon: <Bot className="h-6 w-6" />,
       text: "Users Messages",
+    },
+    {
+      href: "/dashboard/admin/chat",
+      icon: <MessageSquare className="h-6 w-6" />,
+      text: "Admin Chat",
     },
     {
       href: "/dashboard/chatbotlogs",
