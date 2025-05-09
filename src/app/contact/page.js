@@ -154,7 +154,7 @@ const ContactUs = () => {
             </Card>
 
             {/* Physical Address */}
-            <Card className="overflow-hidden border-none shadow-md">
+            <Card className="overflow-hidden border-none shadow-md h-fit">
               <div className="bg-gray-300 py-3 px-6">
                 <CardTitle className="flex items-center ">
                   <MapPin className="mr-2 h-5 w-5" />
@@ -163,11 +163,11 @@ const ContactUs = () => {
               </div>
               <CardContent className="p-6">
                 <p className="mb-4 text-gray-700">
-                  123 Car Avenue
+                  Kokinniitty 9,
                   <br />
-                  Automotive District
+                  02250 Espoo,
                   <br />
-                  New York, NY 10001
+                  Finland
                 </p>
                 <div className="h-48 w-full overflow-hidden rounded-md bg-gray-100">
                   <iframe
@@ -190,7 +190,7 @@ const ContactUs = () => {
             </Card>
 
             {/* Emergency Information */}
-            <Alert className="border-2 border-red-200 bg-red-50 shadow-sm">
+            {/* <Alert className="border-2 border-red-200 bg-red-50 shadow-sm">
               <AlertCircle className="h-5 w-5 text-red-600" />
               <AlertTitle className="text-lg font-bold text-red-700">
                 Emergency Information
@@ -200,7 +200,7 @@ const ContactUs = () => {
                 <span className="font-bold">911</span> or contact your nearest
                 car service center immediately.
               </AlertDescription>
-            </Alert>
+            </Alert> */}
           </div>
 
           {/* Contact Form */}
@@ -301,7 +301,7 @@ const ContactUs = () => {
                           id="phone"
                           name="phone"
                           type="tel"
-                          placeholder="(212) 555-1234"
+                          placeholder="(+358) 46 6133 406"
                           className="border-gray-200 focus-visible:ring-gray-500"
                         />
                       </div>
@@ -468,7 +468,7 @@ const ContactUs = () => {
                   href="tel:+12125551234"
                   className="text-lg font-medium text-gray-600 hover:underline"
                 >
-                  +1 (212) 555-1234
+                  (+358) 555-1234
                 </a>
               </div>
             </div>
@@ -491,7 +491,7 @@ const ContactUs = () => {
                   href="mailto:info@carselling.com"
                   className="text-lg font-medium text-gray-600 hover:underline"
                 >
-                  info@carselling.com
+                  zkhauto@carselling.com
                 </a>
               </div>
             </div>
@@ -506,8 +506,8 @@ const ContactUs = () => {
               Frequently Asked Questions
             </h3>
             <p className="mb-4 text-slate-600">
-              Find quick answers to common questions about our services,
-              appointments, and policies.
+              Find quick answers to common questions about our vehicles, test
+              drive,and dealership services.
             </p>
             <Button
               variant="outline"

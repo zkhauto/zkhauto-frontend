@@ -1,6 +1,7 @@
 import FeaturedCars from "./ui/FeaturedCars";
 import Hero from "./ui/Hero";
 import LatestCarsSection from "./ui/LatestCarsSection";
+import PopularBrand from "./ui/PopularBrand";
 
 const Home = () => {
   return (
@@ -8,6 +9,7 @@ const Home = () => {
       <Hero />
       <FeaturedCars />
       <LatestCarsSection />
+      <PopularBrand />
     </div>
   );
 };
