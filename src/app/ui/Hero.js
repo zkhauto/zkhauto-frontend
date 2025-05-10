@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import "swiper/css";
 import "swiper/css/pagination";
-import { Autoplay, Pagination } from "swiper/modules";
+import { Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Navbar from "./Navbar";
 // Import hero images individually for better optimization
@@ -48,6 +48,8 @@ const Hero = () => {
       image: heroImg3,
       button1: "Get Started",
       button2: "Talk to Us",
+      carListing: () => router.push("/carlisting"),
+      contactClick: () => router.push("/contact"),
     },
   ];
 
