@@ -1,4 +1,6 @@
 import { Inter } from "next/font/google";
+
+import { useRouter } from "next/router";
 import { AuthProvider } from "./context/AuthContext";
 import "./globals.css";
 import Footer from "./ui/Footer";
@@ -11,6 +13,8 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const router = useRouter();
+  console.log("Current location:", router);
   return (
     <html lang="en">
       <body className={inter.className}>

@@ -123,9 +123,7 @@ const AdminTestDrives = () => {
             <h1 className="text-3xl font-bold text-gray-900">
               Test Drive Bookings
             </h1>
-            <p className="text-gray-600 mt-2">
-              Manage all test drive bookings
-            </p>
+            <p className="text-gray-600 mt-2">Manage all test drive bookings</p>
           </div>
 
           {/* Search Bar */}
@@ -164,7 +162,9 @@ const AdminTestDrives = () => {
               <TableBody>
                 {filteredTestDrives.map((drive) => (
                   <TableRow key={drive._id} className="border-gray-200">
-                    <TableCell className="text-gray-900">{drive.name}</TableCell>
+                    <TableCell className="text-gray-900">
+                      {drive.name}
+                    </TableCell>
                     <TableCell className="text-gray-600">
                       {drive.email}
                     </TableCell>
@@ -232,7 +232,8 @@ const AdminTestDrives = () => {
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-500">
-                    Showing <span className="font-medium text-gray-900">1</span> to{" "}
+                    Showing <span className="font-medium text-gray-900">1</span>{" "}
+                    to{" "}
                     <span className="font-medium text-gray-900">
                       {filteredTestDrives.length}
                     </span>{" "}
