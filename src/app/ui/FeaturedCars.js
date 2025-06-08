@@ -88,7 +88,7 @@ const FeaturedCars = () => {
                 </p>
                 <div className="flex items-center justify-between">
                   <p className="text-pink-700 text-lg font-bold">
-                    €{car.price}
+                    {`€${car.price}`}
                   </p>
                   <Link
                     href={`/cars/${car._id}`}
