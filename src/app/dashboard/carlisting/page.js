@@ -352,7 +352,7 @@ const CarListingPage = () => {
                     </TableCell>
                     <TableCell>
                         <div className="text-gray-900">
-                          ${car.price.toLocaleString()}
+                          {`$${car.price.toLocaleString()}`}
                       </div>
                     </TableCell>
                     <TableCell>
