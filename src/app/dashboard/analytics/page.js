@@ -361,7 +361,7 @@ const AIPredictionPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-gray-500 text-sm font-medium">Average Price</h3>
-              <p className="text-2xl font-bold text-gray-800">${predictions.avgPrice.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-gray-800">{`$${predictions.avgPrice.toLocaleString()}`}</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-gray-500 text-sm font-medium">Average Mileage</h3>
@@ -441,7 +441,7 @@ const AIPredictionPage = () => {
                           {car.status}
                         </span>
                       </td>
-                      <td className="py-2">${car.price.toLocaleString()}</td>
+                      <td className="py-2">{`$${car.price.toLocaleString()}`}</td>
                       <td className="py-2">{car.mileage.toLocaleString()} miles</td>
                       <td className="py-2">
                         <button
@@ -613,7 +613,7 @@ const AIPredictionPage = () => {
                               {car.mileage.toLocaleString()} miles
                             </span>
                             <span className="text-gray-600">
-                              ${car.price.toLocaleString()}
+                              {`$${car.price.toLocaleString()}`}
                             </span>
                           </div>
                         </div>

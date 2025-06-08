@@ -1017,7 +1017,7 @@ export default function CarListingPage() {
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-semibold text-white">
-                              ${car.price.toLocaleString()}
+                              {`$${car.price.toLocaleString()}`}
                             </p>
                     </div>
                   </div>
