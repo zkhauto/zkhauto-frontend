@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
+import { API_BASE } from "@/lib/constants";
 
 const AuthContext = createContext();
 
@@ -13,7 +14,7 @@ export function AuthProvider({ children }) {
       try {
         console.log('Checking auth status...');
         const response = await fetch(
-          "http://localhost:5000/users/current-user",
+          `${API_BASE}/users/current-user`,
           {
             credentials: "include",
             headers: {

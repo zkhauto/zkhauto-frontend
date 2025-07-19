@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Sidebar from "../../ui/Sidebar";
+import { API_BASE } from "@/lib/constants";
 
 const AdminTestDrives = () => {
   const [testDrives, setTestDrives] = useState([]);
@@ -32,7 +33,7 @@ const AdminTestDrives = () => {
   useEffect(() => {
     const fetchTestDrives = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/test-drives");
+        const response = await fetch(`${API_BASE}/api/test-drives`);
         if (!response.ok) {
           throw new Error("Failed to fetch test drives");
         }
@@ -65,7 +66,7 @@ const AdminTestDrives = () => {
   const handleStatusUpdate = async (id, status) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/test-drives/${id}/status`,
+        `${API_BASE}/api/test-drives/${id}/status`,
         {
           method: "PUT",
           headers: {
@@ -89,7 +90,7 @@ const AdminTestDrives = () => {
   const handleDelete = async (id) => {
     console.log("Deleting test drive with id:", id);
     try {
-      await fetch(`http://localhost:5000/api/test-drives/${id}`, {
+      await fetch(`${API_BASE}/api/test-drives/${id}`, {
         method: "DELETE",
       });
       setTestDrives((prev) => prev.filter((drive) => drive._id !== id));

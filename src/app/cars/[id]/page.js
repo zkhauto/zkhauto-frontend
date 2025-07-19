@@ -23,6 +23,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Navbar from "../../ui/Navbar";
+import { API_BASE } from "@/lib/constants";
 import {
   Carousel,
   CarouselContent,
@@ -40,11 +41,7 @@ export default function CarDetailsPage() {
   useEffect(() => {
     const fetchCarDetails = async () => {
       try {
-        const response = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
-          }/api/cars/${params.id}`
-        );
+        const response = await fetch(`${API_BASE}/api/cars/${params.id}`);
         if (!response.ok) {
           throw new Error("Failed to fetch car details");
         }

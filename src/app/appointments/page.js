@@ -27,6 +27,7 @@ import { toast, Toaster } from "react-hot-toast";
 
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../ui/Navbar";
+import { API_BASE } from "@/lib/constants";
 
 const TestDriveBooking = () => {
   const { user } = useAuth();
@@ -71,7 +72,7 @@ const TestDriveBooking = () => {
     e.preventDefault();
     console.log("formData", formData);
     try {
-      const response = await fetch("http://localhost:5000/api/test-drive", {
+      const response = await fetch(`${API_BASE}/api/test-drive`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -21,6 +21,7 @@ import { useEffect, useState, useRef } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../ui/Navbar";
+import { API_BASE } from "@/lib/constants";
 import {
   Dialog,
   DialogContent,
@@ -147,7 +148,7 @@ export default function UserProfileEdit() {
   }
   const handleLogout = async () => {
     try {
-      const response = await fetch("http://localhost:5000/users/logout", {
+      const response = await fetch(`${API_BASE}/users/logout`, {
         method: "GET",
         credentials: "include",
       });
@@ -206,7 +207,7 @@ export default function UserProfileEdit() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/users/update-password",
+        `${API_BASE}/users/update-password`,
         {
           method: "PUT",
           headers: {

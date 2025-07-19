@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
+import { API_BASE } from "@/lib/constants";
 
 export default function LoginPage() {
   const { setUser } = useAuth();
@@ -19,7 +20,7 @@ export default function LoginPage() {
     // Trigger Google login
     console.log("Google login triggered");
     const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      process.env.NEXT_PUBLIC_API_URL || API_BASE;
     window.location.href = `${backendUrl}/users/google`;
   };
 
@@ -28,7 +29,7 @@ export default function LoginPage() {
     e.preventDefault(); // Add this to prevent form submission
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/users/login", {
+      const response = await fetch(`${API_BASE}/users/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

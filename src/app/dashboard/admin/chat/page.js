@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { io } from 'socket.io-client';
+import { API_BASE } from '@/lib/constants';
 import { Send, Loader2, AlertCircle, MessageSquare, ArrowLeft, Trash2 } from 'lucide-react';
 
 export default function AdminChatPage() {
@@ -87,7 +88,7 @@ export default function AdminChatPage() {
     const fetchConversations = async () => {
       try {
         setLoading(prev => ({ ...prev, conversations: true }));
-        const response = await fetch('http://localhost:5000/api/admin-chat/conversations', {
+        const response = await fetch(`${API_BASE}/api/admin-chat/conversations`, {
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json'
@@ -108,14 +109,14 @@ export default function AdminChatPage() {
           console.log('No conversations found, creating a test conversation...');
           try {
             // Get the first non-admin user
-            const usersResponse = await fetch('http://localhost:5000/users', {
+            const usersResponse = await fetch(`${API_BASE}/users`, {
               credentials: 'include'
             });
             const users = await usersResponse.json();
             const regularUser = users.find(u => u.role === 'user');
             
             if (regularUser) {
-              const sendResponse = await fetch('http://localhost:5000/api/admin-chat/send', {
+              const sendResponse = await fetch(`${API_BASE}/api/admin-chat/send`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -130,7 +131,7 @@ export default function AdminChatPage() {
               if (sendResponse.ok) {
                 console.log('Test message sent successfully');
                 // Fetch conversations again to get the new conversation
-                const updatedResponse = await fetch('http://localhost:5000/api/admin-chat/conversations', {
+                const updatedResponse = await fetch(`${API_BASE}/api/admin-chat/conversations`, {
                   credentials: 'include',
                   headers: {
                     'Content-Type': 'application/json'
@@ -179,7 +180,7 @@ export default function AdminChatPage() {
     const fetchMessages = async () => {
       if (selectedConversation) {
         try {
-          const response = await fetch(`http://localhost:5000/api/admin-chat/history/${selectedConversation.userId}`, {
+          const response = await fetch(`${API_BASE}/api/admin-chat/history/${selectedConversation.userId}`, {
             credentials: 'include',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -198,7 +199,7 @@ export default function AdminChatPage() {
           setMessages(data);
           
           // Mark messages as read
-          await fetch(`http://localhost:5000/api/admin-chat/read/${selectedConversation.userId}`, {
+          await fetch(`${API_BASE}/api/admin-chat/read/${selectedConversation.userId}`, {
             method: 'PUT',
             credentials: 'include',
             headers: {
@@ -240,7 +241,7 @@ export default function AdminChatPage() {
     setLoading(prev => ({ ...prev, sending: true }));
 
     try {
-      const response = await fetch('http://localhost:5000/api/admin-chat/send', {
+      const response = await fetch(`${API_BASE}/api/admin-chat/send`, {
         method: 'POST',
         credentials: 'include',
         headers: {

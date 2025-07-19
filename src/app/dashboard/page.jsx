@@ -11,6 +11,7 @@ import {
 import { MoreVertical, Package, Users, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import Sidebar from "../ui/Sidebar";
+import { API_BASE } from "@/lib/constants";
 import {
   LineChart,
   Line,
@@ -32,8 +33,8 @@ const Dashboard = () => {
     const fetchSalesData = async () => {
       try {
         const [soldCars, monthlyData] = await Promise.all([
-          fetch("http://localhost:5000/api/cars/sold").then(res => res.json()),
-          fetch("http://localhost:5000/api/cars/sales/monthly").then(res => res.json())
+          fetch(`${API_BASE}/api/cars/sold`).then(res => res.json()),
+          fetch(`${API_BASE}/api/cars/sales/monthly`).then(res => res.json())
         ]);
 
         setSalesData(soldCars);
@@ -49,7 +50,7 @@ const Dashboard = () => {
 
     const fetchTestDriveData = async () => {
       try {
-        const data = await fetch("http://localhost:5000/api/test-drives/approve");
+        const data = await fetch(`${API_BASE}/api/test-drives/approve`);
         const jsonData = await data.json();
         setTestDriveData(jsonData);
       } catch (error) {

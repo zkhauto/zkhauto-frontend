@@ -3,13 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { API_BASE } from "@/lib/constants";
 
 const FeaturedCars = () => {
   const [filteredCars, setFilteredCars] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+  const backendUrl = API_BASE;
 
   useEffect(() => {
     const fetchCars = async () => {

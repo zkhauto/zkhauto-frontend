@@ -5,6 +5,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import { Send, Loader2, AlertCircle, MessageSquare, ArrowLeft } from "lucide-react";
+import { API_BASE } from "@/lib/constants";
 
 export default function UserChatPage() {
   const { user, loading: authLoading } = useAuth();
@@ -34,7 +35,7 @@ export default function UserChatPage() {
     if (!user || user.role === "admin") return;
 
     // Initialize socket connection
-    const newSocket = io("http://localhost:5000", {
+    const newSocket = io(API_BASE, {
       withCredentials: true,
       auth: {
         token: localStorage.getItem("token")
@@ -69,7 +70,7 @@ export default function UserChatPage() {
     const fetchMessages = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/chat/history/${user._id}`, {
+        const response = await fetch(`${API_BASE}/api/chat/history/${user._id}`, {
           credentials: "include",
           headers: {
             "Content-Type": "application/json"
@@ -107,7 +108,7 @@ export default function UserChatPage() {
     if (!newMessage.trim()) return;
 
     try {
-      const response = await fetch("http://localhost:5000/api/chat/send", {
+      const response = await fetch(`${API_BASE}/api/chat/send`, {
         method: "POST",
         credentials: "include",
         headers: {
