@@ -130,7 +130,7 @@ export default function CarDetailsPage() {
                 {car.brand} {car.model}
               </h1>
               <p className="text-2xl font-semibold text-white mt-2">
-                ${car.price.toLocaleString()}
+                {`$${car.price.toLocaleString()}`}
               </p>
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="secondary" className="bg-slate-800">

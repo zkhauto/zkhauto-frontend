@@ -121,7 +121,7 @@ const Dashboard = () => {
                   <p className="text-sm text-slate-400">Revenue Generated</p>
                   <div className="flex items-center gap-4">
                     <h2 className="text-3xl font-bold text-white">
-                      €{totalPrice.toLocaleString()}
+                      {`€${totalPrice.toLocaleString()}`}
                     </h2>
                     <span className="text-sm font-medium text-red-500"></span>
                   </div>

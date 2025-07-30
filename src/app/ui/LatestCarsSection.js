@@ -66,7 +66,7 @@ export default function LatestCarsSection() {
                   {car.brand} {car.model}
                 </div>
                 <div className="text-white font-bold text-lg mt-2">
-                  €{car.price.toLocaleString()}
+                  {`€${car.price.toLocaleString()}`}
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2 pt-3 mt-auto">

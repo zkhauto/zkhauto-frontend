@@ -178,7 +178,7 @@ export default function CarDetailPage() {
                     {car.brand} {car.model}
                   </h1>
                   <p className="mt-2 text-xl text-slate-400">
-                    ${car.price.toLocaleString()}
+                    {`$${car.price.toLocaleString()}`}
                   </p>
                 </div>
 
