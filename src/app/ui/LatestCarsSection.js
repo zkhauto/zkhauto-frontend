@@ -4,12 +4,12 @@ import { Calendar, Fuel, Gauge } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { API_BASE } from "@/lib/constants";
 export default function LatestCarsSection() {
   const [latestCars, setLatestCars] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+  const backendUrl = API_BASE;
 
   useEffect(() => {
     const fetchLatestCars = async () => {

@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from "react";
 import { Cell, Legend, Pie, PieChart, Tooltip, ResponsiveContainer } from "recharts";
 import Sidebar from "../../ui/Sidebar";
+import { API_BASE } from "@/lib/constants";
 import { ImageIcon, Brain, TrendingUp, AlertCircle, Upload } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -53,7 +54,7 @@ const AIPredictionPage = () => {
     const fetchData = async () => {
       try {
         // Fetch cars data
-        const carsResponse = await fetch('http://localhost:5000/api/cars', {
+        const carsResponse = await fetch(`${API_BASE}/api/cars`, {
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
@@ -211,7 +212,7 @@ const AIPredictionPage = () => {
     setSelectedCar(car);
 
     try {
-      const response = await fetch('http://localhost:5000/api/cars/analyze-image', {
+      const response = await fetch(`${API_BASE}/api/cars/analyze-image`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

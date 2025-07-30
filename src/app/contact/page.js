@@ -37,6 +37,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../ui/Navbar";
+import { API_BASE } from "@/lib/constants";
 
 const ContactUs = () => {
   const router = useRouter();
@@ -63,7 +64,7 @@ const ContactUs = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/submit", {
+      const response = await fetch(`${API_BASE}/api/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

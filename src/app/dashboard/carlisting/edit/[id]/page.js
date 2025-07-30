@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeftIcon, X } from "lucide-react";
 import Link from "next/link";
+import { API_BASE } from "@/lib/constants";
 
 const EditCarPage = () => {
   const router = useRouter();
@@ -67,7 +68,7 @@ const EditCarPage = () => {
       try {
         setIsFetching(true);
         const backendUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+          process.env.NEXT_PUBLIC_API_URL || API_BASE;
         const response = await fetch(`${backendUrl}/api/cars/${carId}`);
 
         if (!response.ok) {
@@ -198,7 +199,7 @@ const EditCarPage = () => {
 
     try {
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        process.env.NEXT_PUBLIC_API_URL || API_BASE;
       const response = await fetch(`${backendUrl}/api/cars/${carId}`, {
         method: "PUT",
         // Don't set Content-Type header; browser will set it with boundary for FormData

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "../../context/AuthContext";
+import { API_BASE } from "@/lib/constants";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,7 +57,7 @@ const UsersPage = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:5000/users", {
+        const response = await fetch(`${API_BASE}/users`, {
           credentials: "include",
         });
         if (!response.ok) {
@@ -99,7 +100,7 @@ const UsersPage = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5000/users/update", {
+      const response = await fetch(`${API_BASE}/users/update`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

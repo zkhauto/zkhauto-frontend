@@ -13,6 +13,7 @@ import {
 import { ChevronLeft, ChevronRight, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Sidebar from "../../ui/Sidebar";
+import { API_BASE } from "@/lib/constants";
 
 const AdminMessages = () => {
   const [messages, setMessages] = useState([]);
@@ -24,7 +25,7 @@ const AdminMessages = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/messages");
+        const response = await fetch(`${API_BASE}/api/messages`);
         if (!response.ok) {
           throw new Error("Failed to fetch messages");
         }
@@ -56,7 +57,7 @@ const AdminMessages = () => {
   // Handle delete
   const handleDelete = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/delete/${id}`, {
+      await fetch(`${API_BASE}/api/delete/${id}`, {
         method: "DELETE",
       });
       setMessages((prev) => prev.filter((msg) => msg._id !== id));

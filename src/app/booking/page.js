@@ -67,6 +67,7 @@ import axios from "axios";
 import { Mail, MapPin, PhoneCall } from "lucide-react";
 import { useState } from "react";
 import Navbar from "../ui/Navbar";
+import { API_BASE } from "@/lib/constants";
 
 const Page = () => {
   // States for managing form data
@@ -96,7 +97,7 @@ const Page = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/book",
+        `${API_BASE}/api/book`,
         formData
       );
       setMessage(response.data.message); // Display success message

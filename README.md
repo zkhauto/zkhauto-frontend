@@ -18,7 +18,17 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Backend URL Configuration
+
+The frontend communicates with a backend API. Set the `NEXT_PUBLIC_BACKEND_URL` environment variable to point to the correct server.
+
+- **Development:** create a `.env.local` file with `NEXT_PUBLIC_BACKEND_URL=http://localhost:5000`.
+- **Production:** set `NEXT_PUBLIC_BACKEND_URL` to your deployed backend URL (for example `https://api.example.com`).
+
+If this variable is not provided, the application defaults to `http://localhost:5000`.
 
 ## Learn More
 

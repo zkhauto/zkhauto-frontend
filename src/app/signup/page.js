@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { API_BASE } from "@/lib/constants";
 
 const SignUpPage = () => {
   const router = useRouter();
@@ -19,7 +20,7 @@ const SignUpPage = () => {
 
   const handleGoogleSignup = () => {
     const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      process.env.NEXT_PUBLIC_API_URL || API_BASE;
     window.location.href = `${backendUrl}/users/google`;
   };
 
@@ -41,7 +42,7 @@ const SignUpPage = () => {
       };
       console.log("Sending signup data:", signupData);
 
-      const response = await fetch("http://localhost:5000/users/signup", {
+      const response = await fetch(`${API_BASE}/users/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
